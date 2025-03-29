@@ -1,0 +1,22 @@
+---
+- name: Download PiVPN script.
+  get_url:
+    url: "https://raw.githubusercontent.com/pivpn/pivpn/master/auto_install/install.sh"
+    dest: "/tmp/install.sh"
+
+- name: Write variables to options.conf.
+  template:
+    src: "{{ playbook_dir }}/../templates/options.conf.j2"
+    dest: /tmp/options.conf
+
+- name: Run install.sh with unattended flag.
+  command: "/bin/bash /tmp/install.sh --unattended /tmp/options.conf"
+
+- name: Cleanup installer files
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    -  "/tmp/install.sh"
+    - "/tmp/options.conf"
+  ignore_errors: true

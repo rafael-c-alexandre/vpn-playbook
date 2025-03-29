@@ -1,0 +1,74 @@
+---
+ssh_pub_key_relative_location: ansible.pub
+
+ssh_config_path: /etc/ssh/sshd_config
+ssh_port: 22
+wireguard_port: 51820
+
+security_ufw_rules:
+  - rule: allow
+    to_port: "{{ ssh_port }}"
+    protocol: tcp
+    comment: allow-ssh
+  - rule: allow
+    to_port: "{{ wireguard_port }}"
+    protocol: udp
+    comment: allow-wireguard
+
+pivpn_IPv4dev: eth0
+pivpn_IPv4addr: 192.168.2.13/24
+pivpn_IPv4gw: 192.168.2.254
+pivpn_dhcpReserv: 1
+pivpn_install_home: /root
+pivpn_install_user: root
+pivpn_VPN: wireguard
+pivpn_pivpnNET: 10.8.0.0
+pivpn_subnetClass: 24
+pivpn_pivpnPROTO: udp
+pivpn_pivpnPORT: "{{ wireguard_port }}"
+pivpn_pivpnDNS1: 9.9.9.9
+pivpn_pivpnDNS2: 149.112.112.112
+pivpn_pivpnHOST: 2.82.81.166
+pivpn_UNATTUPG: 0
+pivpn_IPv6dev: eth0
+pivpn_pivpnenableipv6: 1
+pivpn_pivpnNETv6: "fd11:5ee:bad:c0de::"
+pivpn_subnetClassv6: 64
+pivpn_ALLOWED_IPS: "0.0.0.0/0, ::0/0"
+pivpn_pivpnMTU: 1420
+pivpn_ pivpnDEV: wgo
+pivpn_INSTALLED_PACKAGES: "(grepcidr bsdmainutils wireguard-tools qrencode)"
+
+wireguard_conf_dir: /etc/wireguard
+sys_ctl_path: "/etc/sysctl.conf"
+
+server:
+  wireguard_interface: wg0
+  wireguard_addresses:
+    - 10.8.0.1/24
+    - fd11:5ee:bad:c0de::a9c:1801/64
+  wireguard_mtu: 1420
+  wireguard_listen_port: "{{ wireguard_port }}"
+  wireguard_default_interface: eth0
+
+peers:
+  - name: client_1
+    wireguard_addresses:
+      - 10.8.0.2/32
+      - fd11:5ee:bad:c0de::a9c:1802/128
+    wireguard_allowed_ips:
+      - 0.0.0.0/0
+      - ::0/0
+    wireguard_dns: 
+      - 9.9.9.9
+      - 149.112.112.112
+  - name: client_3
+    wireguard_addresses:
+      - 10.8.0.4/32
+      - fd11:5ee:bad:c0de::a9c:1804/128
+    wireguard_allowed_ips:
+      - 0.0.0.0/0
+      - ::0/0
+    wireguard_dns: 
+      - 9.9.9.9
+      - 149.112.112.112

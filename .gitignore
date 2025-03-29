@@ -1,0 +1,5 @@
+.ansible/
+.vscode/
+roles/
+.DS_Store
+inventories/hosts.ini

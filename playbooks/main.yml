@@ -1,0 +1,43 @@
+---
+- name: Setup Pi VPN.
+  hosts: all
+  become: true
+
+  vars_files:
+    - "{{ playbook_dir }}/../default.config.yml"
+
+  pre_tasks:
+    - name: Include playbook configuration.
+      include_vars: "{{ item }}"
+      with_fileglob:
+        - "{{ playbook_dir }}/../config.yml"
+
+    - name: Update apt caches.
+      package:
+        update_cache: true
+        cache_valid_time: 3600
+  
+  handlers:
+    - name: reload wireguard
+      shell: "wg syncconf {{ server.wireguard_interface }} <(wg-quick strip {{ server.wireguard_interface }})"
+      args:
+        executable: /bin/bash
+
+    - name: reload sysctl
+      shell: "sysctl -p"
+
+  tasks:
+    - name: Install security services.
+      include_role:
+        name: rafael-c-alexandre.security
+      vars:
+        security_ansible_port: "{{ ssh_port }}"
+
+    - name: Install NTP service.
+      include_role:
+        name: rafael-c-alexandre.ntp
+    
+    - include_tasks: "{{ playbook_dir }}/../tasks/vanilla_wireguard.yml"
+      # when: vanilla_wireguard_enabled
+
+    # - include_tasks: "{{ playbook_dir }}/../tasks/pivpn.yml"

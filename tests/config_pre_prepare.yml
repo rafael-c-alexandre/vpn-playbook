@@ -1,0 +1,2 @@
+---
+ssh_pub_key_relative_location: ./tests/keys/ansible.pub

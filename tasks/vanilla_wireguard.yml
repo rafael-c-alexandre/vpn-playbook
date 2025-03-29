@@ -1,0 +1,172 @@
+---
+- name: Install Wireguard packages.
+  apt:
+    name:
+      - wireguard
+      - wireguard-tools
+      - qrencode  # Useful for generating QR codes for mobile clients.
+    state: present
+
+- name: Ensure Wireguard configuration directories are created.
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0700"
+  with_items:
+    - "{{ wireguard_conf_dir }}"
+    - "{{ wireguard_conf_dir }}/keys"
+    - "{{ wireguard_conf_dir }}/peers"
+    - "{{ wireguard_conf_dir }}/peers/keys"
+
+- name: Configure IP forwarding.
+  lineinfile:
+    dest: "{{ sys_ctl_path }}"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+    mode: "0600"
+  with_items:
+    - regexp: "^.*net.ipv4.ip_forward"
+      line: "net.ipv4.ip_forward=1"
+    - regexp: "^.*net.ipv6.conf.all.forwarding"
+      line: "net.ipv6.conf.all.forwarding=1"
+  notify: reload sysctl
+
+- name: Check if server private key exisst and create if not.
+  shell: |
+    if [ -f "{{ wireguard_conf_dir }}/keys/server.priv" ]; then
+      cat "{{ wireguard_conf_dir }}/keys/server.priv"
+    else
+      wg genkey | tee "{{ wireguard_conf_dir }}/keys/server.priv"
+      chmod 600 "{{ wireguard_conf_dir }}/keys/server.priv"
+    fi
+  register: register_server_private_key
+  changed_when: false
+
+- name: Get default server interface.
+  shell: ip route show default | awk '{for(i=1;i<=NF;i++) if ($i=="dev") print $(i+1)}' 
+  register: register_default_interface
+  changed_when: false
+
+- name: Set default interface fact.
+  set_fact:
+    server: "{{ server | combine({'wireguard_default_interface': register_default_interface.stdout}) }}"
+
+- name: Check if server public key exisst and create if not.
+  shell: |
+    if [ -f "{{ wireguard_conf_dir }}/keys/server.pub" ]; then
+      cat "{{ wireguard_conf_dir }}/keys/server.pub"
+    else
+      cat "{{ wireguard_conf_dir }}/keys/server.priv" | wg pubkey | tee "{{ wireguard_conf_dir }}/keys/server.pub"
+      chmod 600 "{{ wireguard_conf_dir }}/keys/server.pub"
+    fi
+  register: register_server_public_key
+  changed_when: false
+
+- name: Set server private key fact.
+  set_fact:
+    server: "{{ server | combine({'wireguard_private_key': register_server_private_key.stdout}) }}"
+    
+- name: Set server public key fact.
+  set_fact:
+    server: "{{ server | combine({'wireguard_public_key': register_server_public_key.stdout}) }}"
+
+- name: Retrieve and set public ip in case server.wireguard endpoint is not defined.
+  block:
+    - name: Get public IPv4 address.
+      uri:
+        url: https://api.ipify.org?format=text
+        return_content: yes
+      register: register_wireguard_public_ip_v4
+
+    - name: Set server public ip.
+      set_fact:
+        server: "{{ server | combine({'wireguard_host': register_wireguard_public_ip_v4.content} )}}"
+      changed_when: false
+
+  when: not server.wireguard_endpoint is defined
+
+- name: Check if peer private keys exist and create if not.
+  shell: |
+    if [ -f "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.priv" ]; then
+      cat "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.priv"
+    else
+      wg genkey | tee "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.priv"
+      chmod 600 "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.priv"
+    fi
+  register: register_peer_private_key
+  changed_when: false
+  with_items: "{{ peers }}"
+
+- name: Check if peer public keys exist and create if not.
+  shell: |
+    if [ -f "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.pub" ]; then
+       cat "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.pub"
+    else
+      cat "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.priv" | wg pubkey | tee "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.pub"
+      chmod 600 "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.pub"
+    fi
+  register: register_peer_public_key
+  changed_when: false
+  with_items: "{{ peers }}"
+
+- name: Set peers private keys fact.
+  set_fact:
+    peers_keys: "{{ peers_keys | default([]) | combine({'wireguard_private_key_' + item.item.name: item.stdout}) }}"
+  loop: "{{ register_peer_private_key.results }}"
+  loop_control:
+    index_var: index
+
+- name: Set peers public keys fact.
+  set_fact:
+    peers_keys: "{{ peers_keys | default([]) | combine({'wireguard_public_key_' + item.item.name: item.stdout}) }}"
+  loop: "{{ register_peer_public_key.results }}"
+  loop_control:
+    index_var: index
+
+- name: Generate Wireguard configuration file.
+  template:
+    src: "{{ playbook_dir }}/../templates/vanilla-wireguard/wg.conf.j2"
+    dest: "{{ wireguard_conf_dir }}/{{ server.wireguard_interface }}.conf"
+    mode: "0600"
+  notify: reload wireguard
+
+- name: Generate peers config from template.
+  template:
+    src: "{{ playbook_dir }}/../templates/vanilla-wireguard/peer.conf.j2"
+    dest: "{{ wireguard_conf_dir }}/peers/{{ item.name }}.conf"
+    mode: "0600"
+  with_items: "{{ peers }}"
+
+# - name: Read the current WireGuard config
+#   slurp:
+#     src: "{{ wireguard_conf_dir }}/wg0.conf"
+#   register: wg_config
+#   changed_when: false
+
+# - name: Parse wireguard server config.
+#   set_fact:
+#     parsed_config: "{{ wg_config.content | b64decode | split('\n') }}"
+
+# - name: Find peers to delete.
+#   set_fact:
+#     included_peers: "{{ parsed_config | select('match', '^Name\\s*=\\s*\\S+$') | map('regex_replace', '^Name\\s*=\\s*(\\S+)$', '\\1.conf') | map('regex_replace', '^', wireguard_conf_dir + '/clients/') | list }}"
+
+# - name: Remove conf files that are not in the keep list.
+#   find:
+#     paths: "{{ wireguard_conf_dir }}/clients"
+#   register: found_confs
+
+# - name: Remove conf files that are not in the keep list.
+#   file:
+#     path: "{{ item.path }}"
+#     state: absent
+#   when: item.path not in included_peers
+#   with_items:  "{{ found_confs.files }}"
+
+- name: Ensure Wireguard is started and enabled at boot.
+  service:
+    name: "wg-quick@{{ server.wireguard_interface }}"
+    state: started
+    enabled: True
+ 

@@ -1,0 +1,20 @@
+[Interface]
+PrivateKey = {{ peers_keys['wireguard_private_key_' + item.name] }}
+{% if item.wireguard_addresses is defined %}
+Address = {{ item.wireguard_addresses | join(', ') }}
+{% endif %}
+{% if item.wireguard_dns is defined %}
+DNS = {{ item.wireguard_dns | join(', ') }}
+{% endif %}
+
+[Peer]
+PublicKey = {{ server.wireguard_public_key }}
+{% if server.wireguard_preshared_key is defined %}
+PresharedKey = {{ server.wireguard_preshared_key }}
+{% endif %}
+{% if server.wireguard_host is defined %}
+Endpoint = {{ server.wireguard_host }}:{{ wireguard_port }}
+{%  endif %}
+{% if item.wireguard_allowed_ips is defined %}
+AllowedIPs = {{ item.wireguard_allowed_ips | join(', ') }}
+{% endif %}

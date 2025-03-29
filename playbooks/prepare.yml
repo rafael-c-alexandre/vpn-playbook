@@ -1,0 +1,36 @@
+---
+- name: Setup environment for ansible automation.
+  hosts: all
+  become: true
+
+  handlers:
+    - name: restart ssh
+      service:
+        name: ssh
+        state: restarted
+
+  vars_files:
+    - "{{ playbook_dir }}/../default.config.yml"
+
+  pre_tasks:
+    - name: Include playbook configuration.
+      include_vars: "{{ item }}"
+      with_fileglob:
+        - "{{ playbook_dir }}/../config.yml"
+
+  tasks:
+    - name: Provision ansible automated user.
+      include_role:
+        name: rafael-c-alexandre.provision
+      vars:
+        ssh_pub_key_location: "{{ playbook_dir }}/../{{ ssh_pub_key_relative_location }}"
+
+    # - name: Define custom ssh port.
+    #   lineinfile:
+    #     dest: "{{ ssh_config_path }}"
+    #     regexp: "^Port"
+    #     line: "Port {{ ssh_port }}"
+    #     state: present
+    #     validate: 'sshd -T -f %s'
+    #     mode: "0644"
+    #   notify: restart ssh
