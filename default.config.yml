@@ -62,13 +62,3 @@ peers:
     wireguard_dns: 
       - 9.9.9.9
       - 149.112.112.112
-  - name: client_3
-    wireguard_addresses:
-      - 10.8.0.4/32
-      - fd11:5ee:bad:c0de::a9c:1804/128
-    wireguard_allowed_ips:
-      - 0.0.0.0/0
-      - ::0/0
-    wireguard_dns: 
-      - 9.9.9.9
-      - 149.112.112.112

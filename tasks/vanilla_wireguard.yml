@@ -113,16 +113,12 @@
 - name: Set peers private keys fact.
   set_fact:
     peers_keys: "{{ peers_keys | default([]) | combine({'wireguard_private_key_' + item.item.name: item.stdout}) }}"
-  loop: "{{ register_peer_private_key.results }}"
-  loop_control:
-    index_var: index
+  with_items: "{{ register_peer_private_key.results }}"
 
 - name: Set peers public keys fact.
   set_fact:
     peers_keys: "{{ peers_keys | default([]) | combine({'wireguard_public_key_' + item.item.name: item.stdout}) }}"
-  loop: "{{ register_peer_public_key.results }}"
-  loop_control:
-    index_var: index
+  with_items: "{{ register_peer_public_key.results }}"
 
 - name: Generate Wireguard configuration file.
   template:
@@ -138,31 +134,17 @@
     mode: "0600"
   with_items: "{{ peers }}"
 
-# - name: Read the current WireGuard config
-#   slurp:
-#     src: "{{ wireguard_conf_dir }}/wg0.conf"
-#   register: wg_config
-#   changed_when: false
+- name: Register all keep peers paths.
+  find:
+    paths: ["{{ wireguard_conf_dir }}/peers", "{{ wireguard_conf_dir }}/peers/keys"]
+  register: found_peer_files
 
-# - name: Parse wireguard server config.
-#   set_fact:
-#     parsed_config: "{{ wg_config.content | b64decode | split('\n') }}"
-
-# - name: Find peers to delete.
-#   set_fact:
-#     included_peers: "{{ parsed_config | select('match', '^Name\\s*=\\s*\\S+$') | map('regex_replace', '^Name\\s*=\\s*(\\S+)$', '\\1.conf') | map('regex_replace', '^', wireguard_conf_dir + '/clients/') | list }}"
-
-# - name: Remove conf files that are not in the keep list.
-#   find:
-#     paths: "{{ wireguard_conf_dir }}/clients"
-#   register: found_confs
-
-# - name: Remove conf files that are not in the keep list.
-#   file:
-#     path: "{{ item.path }}"
-#     state: absent
-#   when: item.path not in included_peers
-#   with_items:  "{{ found_confs.files }}"
+- name: Remove peer files that are not in the keep list.
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  when: item.path | basename | regex_replace('(\.conf$|\.priv$|\.pub$)', '') not in peers | map(attribute='name') | list
+  with_items:  ["{{ found_peer_files.files }}"]
 
 - name: Ensure Wireguard is started and enabled at boot.
   service:
