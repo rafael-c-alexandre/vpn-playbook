@@ -2,7 +2,7 @@
 ssh_pub_key_relative_location: ansible.pub
 
 ssh_config_path: /etc/ssh/sshd_config
-ssh_port: 22
+ssh_port: 2849
 wireguard_port: 51820
 
 security_ufw_rules:
@@ -39,6 +39,7 @@ pivpn_pivpnMTU: 1420
 pivpn_ pivpnDEV: wgo
 pivpn_INSTALLED_PACKAGES: "(grepcidr bsdmainutils wireguard-tools qrencode)"
 
+vanilla_wireguard_enabled: True
 wireguard_conf_dir: /etc/wireguard
 sys_ctl_path: "/etc/sysctl.conf"
 

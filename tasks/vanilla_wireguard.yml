@@ -4,8 +4,12 @@
     name:
       - wireguard
       - wireguard-tools
-      - qrencode  # Useful for generating QR codes for mobile clients.
+      - qrencode # Useful for generating QR codes for mobile clients.
     state: present
+  register: result
+  retries: 5 # Retry because this task might fail due to unattended-upgrades.
+  delay: 20             
+  until: result is success
 
 - name: Ensure Wireguard configuration directories are created.
   file:
@@ -151,4 +155,3 @@
     name: "wg-quick@{{ server.wireguard_interface }}"
     state: started
     enabled: True
- 

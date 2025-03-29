@@ -24,13 +24,21 @@
         name: rafael-c-alexandre.provision
       vars:
         ssh_pub_key_location: "{{ playbook_dir }}/../{{ ssh_pub_key_relative_location }}"
+    
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+    
+    - name: Reset any UFW rules.
+      community.general.ufw:
+        state: reset
+      when: "'ufw' in ansible_facts.packages"
 
-    # - name: Define custom ssh port.
-    #   lineinfile:
-    #     dest: "{{ ssh_config_path }}"
-    #     regexp: "^Port"
-    #     line: "Port {{ ssh_port }}"
-    #     state: present
-    #     validate: 'sshd -T -f %s'
-    #     mode: "0644"
-    #   notify: restart ssh
+    - name: Define custom ssh port.
+      lineinfile:
+        dest: "{{ ssh_config_path }}"
+        regexp: "^Port"
+        line: "Port {{ ssh_port }}"
+        state: present
+        validate: 'sshd -T -f %s'
+        mode: "0644"
+      notify: restart ssh
