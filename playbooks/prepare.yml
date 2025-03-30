@@ -25,8 +25,8 @@
       vars:
         ssh_pub_key_location: "{{ playbook_dir }}/../{{ ssh_pub_key_relative_location }}"
 
-    - name: Gather package facts
-      ansible.builtin.package_facts:
+    - name: Gather package facts.
+      package_facts:
 
     - name: Reset any UFW rules.
       ufw:
