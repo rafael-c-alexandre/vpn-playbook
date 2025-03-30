@@ -3,3 +3,6 @@ roles:
   - name: rafael-c-alexandre.provision
   - name: rafael-c-alexandre.security
   - name: rafael-c-alexandre.ntp
+
+collections:
+  - community.general
