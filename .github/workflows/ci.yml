@@ -1,64 +1,64 @@
-# ---
-# 'on':
-#   pull_request:
-#   push:
-#     branches:
-#       - main
-#     paths-ignore:
-#       - 'README.md'
-#   workflow_dispatch:
+---
+'on':
+  pull_request:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+  workflow_dispatch:
 
-# jobs:
+jobs:
 
-#   lint:
-#     name: Lint
-#     uses: rafael-c-alexandre/ansible-devops/.github/workflows/lint.yml@main
-#     with:
-#       lint_path: "./playbooks/"
+  lint:
+    name: Lint
+    uses: rafael-c-alexandre/ansible-devops/.github/workflows/lint.yml@main
+    with:
+      lint_path: "./playbooks/"
 
-#   playbook-test:
-#     name: Run playbook test
-#     runs-on: ubuntu-latest
-#     needs: lint
+  playbook-test:
+    name: Run playbook test
+    runs-on: ubuntu-latest
+    needs: lint
 
-#     steps:
-#       - name: Check out the codebase.
-#         uses: actions/checkout@v4
+    steps:
+      - name: Check out the codebase.
+        uses: actions/checkout@v4
 
-#       - name: Set up Python 3.
-#         uses: actions/setup-python@v5
-#         with:
-#           python-version: '3.x'
+      - name: Set up Python 3.
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
 
-#       - name: Install test dependencies.
-#         run: |
-#           pip3 install ansible
+      - name: Install test dependencies.
+        run: |
+          pip3 install ansible
 
-#       - name: Setup SSH server.
-#         uses: rafael-c-alexandre/ansible-devops/.github/actions/start-ssh-server@main
-#         with:
-#           ssh_private_key_path: "./tests/keys/ci"
-#           ssh_public_key_path: "./tests/keys/ci.pub"
+      - name: Setup SSH server.
+        uses: rafael-c-alexandre/ansible-devops/.github/actions/start-ssh-server@main
+        with:
+          ssh_private_key_path: "./tests/keys/ci"
+          ssh_public_key_path: "./tests/keys/ci.pub"
 
-#       - name: Download ansible roles.
-#         run: |
-#           ansible-galaxy install -r requirements.yml
+      - name: Download ansible roles.
+        run: |
+          ansible-galaxy install -r requirements.yml
 
-#       - name: Fix ansible private keys permissions.
-#         run: chmod 600 ./tests/keys/ci ./tests/keys/ansible
+      - name: Fix ansible private keys permissions.
+        run: chmod 600 ./tests/keys/ci ./tests/keys/ansible
 
-#       - name: Run prepare.yml playbook test.
-#         uses: rafael-c-alexandre/ansible-devops/.github/actions/playbook-test@main
-#         with:
-#           playbook_path: "./playbooks/prepare.yml"
-#           ansible_cfg_path: "./tests/ansible_pre_prepare.cfg"
-#           inventory_path: "./tests/inventory.ini"
-#           config_path: "./tests/config_pre_prepare.yml"
+      - name: Run prepare.yml playbook test.
+        uses: rafael-c-alexandre/ansible-devops/.github/actions/playbook-test@main
+        with:
+          playbook_path: "./playbooks/prepare.yml"
+          ansible_cfg_path: "./tests/ansible_pre_prepare.cfg"
+          inventory_path: "./tests/inventory.ini"
+          config_path: "./tests/config_pre_prepare.yml"
 
-#       - name: Run main.yml playbook test.
-#         uses: rafael-c-alexandre/ansible-devops/.github/actions/playbook-test@main
-#         with:
-#           playbook_path: "./playbooks/main.yml"
-#           ansible_cfg_path: "./tests/ansible_after_prepare.cfg"
-#           inventory_path: "./tests/inventory.ini"
-#           config_path: "./tests/config_after_prepare.yml"
+      - name: Run main.yml playbook test.
+        uses: rafael-c-alexandre/ansible-devops/.github/actions/playbook-test@main
+        with:
+          playbook_path: "./playbooks/main.yml"
+          ansible_cfg_path: "./tests/ansible_after_prepare.cfg"
+          inventory_path: "./tests/inventory.ini"
+          config_path: "./tests/config_after_prepare.yml"

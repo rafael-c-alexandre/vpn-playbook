@@ -3,3 +3,4 @@
 roles/
 .DS_Store
 inventories/hosts.ini
+config.yml

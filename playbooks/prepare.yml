@@ -29,7 +29,7 @@
       ansible.builtin.package_facts:
 
     - name: Reset any UFW rules.
-      community.general.ufw:
+      ufw:
         state: reset
       when: "'ufw' in ansible_facts.packages"
 
