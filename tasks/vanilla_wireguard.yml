@@ -45,6 +45,8 @@
       wg genkey | tee "{{ wireguard_conf_dir }}/keys/server.priv"
       chmod 600 "{{ wireguard_conf_dir }}/keys/server.priv"
     fi
+  args:
+    executable: /bin/bash
   register: register_server_private_key
   changed_when: false
 
@@ -52,6 +54,8 @@
   shell: |
     set -euo pipefail
     ip route show default | awk '{for(i=1;i<=NF;i++) if ($i=="dev") print $(i+1)}'
+  args:
+    executable: /bin/bash
   register: register_default_interface
   changed_when: false
 
@@ -68,6 +72,8 @@
       cat "{{ wireguard_conf_dir }}/keys/server.priv" | wg pubkey | tee "{{ wireguard_conf_dir }}/keys/server.pub"
       chmod 600 "{{ wireguard_conf_dir }}/keys/server.pub"
     fi
+  args:
+    executable: /bin/bash
   register: register_server_public_key
   changed_when: false
 
@@ -102,6 +108,8 @@
       wg genkey | tee "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.priv"
       chmod 600 "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.priv"
     fi
+  args:
+    executable: /bin/bash
   register: register_peer_private_key
   changed_when: false
   with_items: "{{ peers }}"
@@ -115,6 +123,8 @@
       cat "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.priv" | wg pubkey | tee "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.pub"
       chmod 600 "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.pub"
     fi
+  args:
+    executable: /bin/bash
   register: register_peer_public_key
   changed_when: false
   with_items: "{{ peers }}"
