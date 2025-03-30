@@ -8,7 +8,7 @@
     state: present
   register: result
   retries: 5 # Retry because this task might fail due to unattended-upgrades.
-  delay: 20             
+  delay: 20
   until: result is success
 
 - name: Ensure Wireguard configuration directories are created.
@@ -38,6 +38,7 @@
 
 - name: Check if server private key exisst and create if not.
   shell: |
+    set -euo pipefail
     if [ -f "{{ wireguard_conf_dir }}/keys/server.priv" ]; then
       cat "{{ wireguard_conf_dir }}/keys/server.priv"
     else
@@ -48,7 +49,9 @@
   changed_when: false
 
 - name: Get default server interface.
-  shell: ip route show default | awk '{for(i=1;i<=NF;i++) if ($i=="dev") print $(i+1)}' 
+  shell: |
+    set -euo pipefail
+    ip route show default | awk '{for(i=1;i<=NF;i++) if ($i=="dev") print $(i+1)}'
   register: register_default_interface
   changed_when: false
 
@@ -58,6 +61,7 @@
 
 - name: Check if server public key exisst and create if not.
   shell: |
+    set -euo pipefail
     if [ -f "{{ wireguard_conf_dir }}/keys/server.pub" ]; then
       cat "{{ wireguard_conf_dir }}/keys/server.pub"
     else
@@ -70,28 +74,28 @@
 - name: Set server private key fact.
   set_fact:
     server: "{{ server | combine({'wireguard_private_key': register_server_private_key.stdout}) }}"
-    
+
 - name: Set server public key fact.
   set_fact:
     server: "{{ server | combine({'wireguard_public_key': register_server_public_key.stdout}) }}"
 
 - name: Retrieve and set public ip in case server.wireguard endpoint is not defined.
+  when: not server.wireguard_endpoint is defined
   block:
     - name: Get public IPv4 address.
       uri:
         url: https://api.ipify.org?format=text
-        return_content: yes
+        return_content: true
       register: register_wireguard_public_ip_v4
 
     - name: Set server public ip.
       set_fact:
-        server: "{{ server | combine({'wireguard_host': register_wireguard_public_ip_v4.content} )}}"
+        server: "{{ server | combine({'wireguard_host': register_wireguard_public_ip_v4.content}) }}"
       changed_when: false
-
-  when: not server.wireguard_endpoint is defined
 
 - name: Check if peer private keys exist and create if not.
   shell: |
+    set -euo pipefail
     if [ -f "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.priv" ]; then
       cat "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.priv"
     else
@@ -104,6 +108,7 @@
 
 - name: Check if peer public keys exist and create if not.
   shell: |
+    set -euo pipefail
     if [ -f "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.pub" ]; then
        cat "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.pub"
     else
@@ -148,10 +153,10 @@
     path: "{{ item.path }}"
     state: absent
   when: item.path | basename | regex_replace('(\.conf$|\.priv$|\.pub$)', '') not in peers | map(attribute='name') | list
-  with_items:  ["{{ found_peer_files.files }}"]
+  with_items: ["{{ found_peer_files.files }}"]
 
 - name: Ensure Wireguard is started and enabled at boot.
   service:
     name: "wg-quick@{{ server.wireguard_interface }}"
     state: started
-    enabled: True
+    enabled: true

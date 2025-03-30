@@ -16,15 +16,17 @@
       package:
         update_cache: true
         cache_valid_time: 3600
-  
+
   handlers:
     - name: reload wireguard
       shell: "wg syncconf {{ server.wireguard_interface }} <(wg-quick strip {{ server.wireguard_interface }})"
       args:
         executable: /bin/bash
+      changed_when: false
 
     - name: reload sysctl
-      shell: "sysctl -p"
+      command: "sysctl -p"
+      changed_when: false
 
   tasks:
     - name: Install security services.
@@ -36,7 +38,7 @@
     - name: Install NTP service.
       include_role:
         name: rafael-c-alexandre.ntp
-    
+
     - include_tasks: "{{ playbook_dir }}/../tasks/vanilla_wireguard.yml"
       when: vanilla_wireguard_enabled
 
