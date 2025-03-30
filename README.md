@@ -164,6 +164,8 @@ Any variable can be overridden in `config.yml`; see the supporting roles' docume
 
 This project is [continuously tested on GitHub Actions](https://github.com/rafael-c-alexandre/nas-playbook/actions/workflows/ci.yml), where all its playbooks are tested in sequence. A note on this: as of now, OMV installation cannot be tested since it does not work with Docker.
 
+Vanilla wireguard based on: https://www.digitalocean.com/community/tutorials/how-to-set-up-wireguard-on-ubuntu-20-04
+qrencode -t ansiutf8 < /etc/wireguard/client.conf
 
 License
 -------
