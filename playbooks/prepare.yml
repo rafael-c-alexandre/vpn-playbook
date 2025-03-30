@@ -32,6 +32,7 @@
       ufw:
         state: reset
       when: "'ufw' in ansible_facts.packages"
+      changed_when: false
 
     - name: Define custom ssh port.
       lineinfile:
