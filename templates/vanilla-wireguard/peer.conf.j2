@@ -12,7 +12,9 @@ PublicKey = {{ server.wireguard_public_key }}
 {% if server.wireguard_preshared_key is defined %}
 PresharedKey = {{ server.wireguard_preshared_key }}
 {% endif %}
-{% if server.wireguard_host is defined %}
+{% if server.wireguard_endpoint is defined %}
+Endpoint = {{ server.wireguard_endpoint }}
+{% else %}
 Endpoint = {{ server.wireguard_host }}:{{ wireguard_port }}
 {%  endif %}
 {% if item.wireguard_allowed_ips is defined %}
