@@ -1,0 +1,2 @@
+---
+ssh_pub_key_relative_location: ../.github/configs/keys/ansible.pub # Path relative to the playbook path.
