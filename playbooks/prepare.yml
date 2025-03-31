@@ -23,7 +23,7 @@
       include_role:
         name: rafael-c-alexandre.provision
       vars:
-        ssh_pub_key_location: "{{ playbook_dir }}/../{{ ssh_pub_key_relative_location }}"
+        ssh_pub_key_location: "{{ ssh_pub_key_relative_location }}"
 
     - name: Gather package facts.
       package_facts:

@@ -33,16 +33,39 @@ and copies my NAS backup configuration:
 
 The recommend installation guide is as follows:
 
-  1. Ensure the Raspberry Pi has Pi OS installed and SSH running and reachable.
-  2. Get the PI IP address or hostname through `ip a` (or any other network-related tool) or in the router UI.
-  3. Add the IP address/hostname in an inventory file such as `inventories/hosts.local.ini`.
-  3. Clone or download this repository to your local drive.
-  4. Run `ansible-galaxy install -r requirements.yml` inside this directory to install required Ansible roles and collections.
-  5. Change `ansible.cfg` according to the local configurations, namely the `remote_user`, `private_key_file` and `inventory`.
-  6. Run `ansible-playbook playbooks/prepare.yml` inside this directory. 
-  7. Change `ansible.cfg` again according to the new configurations, namely the `remote_user`, `private_key_file` and `inventory`.
-  6. Run `ansible-playbook playbooks/main.yml` inside this directory.
-  7. (Additional) On demand, run `ansible-playbook playbooks/upgrade_immich.yml` inside this directory.
+1. Ensure the Raspberry Pi has Pi OS installed and SSH running and reachable.
+2. Get the PI IP address or hostname through `ip a` (or any other network-related tool) or in the router UI.
+3. Add the IP address/hostname in an inventory file such as `inventories/hosts.local.ini`.
+4. Clone or download this repository to your local drive.
+5. Run `ansible-galaxy install -r requirements.yml` inside this directory to install required Ansible roles and collections.
+6. To prepare the ansible environment,
+    - Change host in `inventories/hosts.ini` file.
+    - Edit any ansible variables in the `configs/ansible_pre_prepare.cfg` file, namely `remote_user` and `private_key_file`.
+    - Add any custom playbook configuration variables in a new `configs/config_pre_prepare.yml` file.
+
+7. In order to copy the configurations needed for the `prepare` playbook, in the root folder, run 
+```bash
+cp configs/ansible_pre_prepare.cfg ansible.cfg && cp configs/config_pre_prepare.yml config.yml && cp inventories/hosts.ini inventory`
+```
+8. In the root folder, run 
+``` bash
+ansible-playbook playbooks/prepare.yml
+``` 
+9. Because the ssh config and other properties were changed, we need to update our configs:
+    - Edit any ansible variables in the `configs/ansible_after_prepare.cfg` file, namely `remote_user` and `private_key_file`.
+    - Add any custom configuration variables in a new `configs/config_after_prepare.yml` file, for instance, the two samba usernames (for me and my partner), respective shares, plus the common shared one.
+10. In order to copy the configurations needed for the `main` playbook, in the root folder, run 
+```bash
+cp configs/ansible_after_prepare.cfg ansible.cfg && cp configs/config_after_prepare.yml config.yml && cp inventories/hosts.ini inventory` 
+``` 
+11. In the root folder, run  
+``` bash
+ansible-playbook playbooks/main.yml
+``` 
+12. (Additional) On demand,in the root folder, run (with the same 'after-prepare' configs)
+```bash
+ansible-playbook playbooks/upgrade_immich.yml
+``` 
 
 ### Manual actions
 
@@ -53,15 +76,15 @@ Automating the OMV configuration is difficult so when it comes to set OMV up, th
   3. Make two partitions to the RAID 1, with desired sizes (using `fdisk` or `parted`).
   4. Create filesystems for both partitions *(Storage -> File Systems)*.
   5. Add backup scheduled tasks *(System -> Scheduled Tasks)*. They should all belong to the dedicated backups user.
-        1. For shared SMB folder: `/usr/bin/bash /opt/scripts/backups/backup.sh -s /path/to/ssd/mmointing/point/shared/ -r pinas-backups-b2-crypt:nas`
-        2. For immich: `/usr/bin/bash /opt/scripts/backups/backup.sh -s /path/to/ssd/mmointing/point/immich/ -r pinas-backups-b2-crypt:immich`
+        1. For shared SMB folder: `/usr/bin/bash /opt/scripts/backups/backup.sh -s /path/to/nas/partition/mounting/point/ -r pinas-backups-b2-crypt:nas`
+        2. For immich: `/usr/bin/bash /opt/scripts/backups/backup.sh -s /path/to/immich/partition/mounting/point/ -r pinas-backups-b2-crypt:immich`
   6. Activate S.M.A.R.T. monitoring *(Storage -> S.M.A.R.T.)*
         1. Add the two SSDs *(Devices)*.
         2. Add scheduled `short self-test`s for the SSDs *(Scheduled Tasks)*.
   7. Enable notifications through e-mail *(System -> Notifications -> Settings)*, by adding the correct SMTP configuration.
   8. Replace `UPLOAD_LOCATION` and `DB_DATA_LOCATION` with the mounting points for the SSDs in the immich `.env` file.
-  9. Copy rclone config file to the backups user`/$HOME/.config/` location.
-  10. Change `/srv/mounting/points/` ownership to `root:{{ nas_group }}` andpermissions to `2770`:
+  9. Copy rclone config file to the backups user `/$HOME/.config/` location.
+  10. Change `/srv/mounting/points/` ownership to `root:{{ nas_group }}` and permissions to `2770`:
   ```bash
     chown -R root:{{ nas_group }} /srv/mounting/points/
     chmod -R "2770" /srv/mounting/points/
@@ -164,8 +187,6 @@ Any variable can be overridden in `config.yml`; see the supporting roles' docume
 
 This project is [continuously tested on GitHub Actions](https://github.com/rafael-c-alexandre/nas-playbook/actions/workflows/ci.yml), where all its playbooks are tested in sequence. A note on this: as of now, OMV installation cannot be tested since it does not work with Docker.
 
-Vanilla wireguard based on: https://www.digitalocean.com/community/tutorials/how-to-set-up-wireguard-on-ubuntu-20-04
-qrencode -t ansiutf8 < /etc/wireguard/client.conf
 
 License
 -------

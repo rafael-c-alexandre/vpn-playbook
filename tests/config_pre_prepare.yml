@@ -1,2 +1,2 @@
 ---
-ssh_pub_key_relative_location: ./tests/keys/ansible.pub
+ssh_pub_key_relative_location: ../tests/keys/ansible.pub ## Path relative to the playbook path.

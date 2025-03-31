@@ -1,5 +1,5 @@
 ---
-ssh_pub_key_relative_location: ansible.pub
+ssh_pub_key_relative_location: ~/.ssh/ansible.pub
 
 ssh_config_path: /etc/ssh/sshd_config
 ssh_port: 2849

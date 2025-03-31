@@ -42,6 +42,7 @@ jobs:
 
       - name: Download ansible roles.
         run: |
+          cp ./tests/ansible_pre_prepare.cfg ansible.cfg
           ansible-galaxy install -r requirements.yml
 
       - name: Fix ansible private keys permissions.
