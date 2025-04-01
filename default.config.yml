@@ -15,6 +15,7 @@ security_ufw_rules:
     protocol: udp
     comment: allow-wireguard
 
+# PiVPN related configs
 pivpn_IPv4dev: eth0
 pivpn_IPv4addr: 192.168.2.13/24
 pivpn_IPv4gw: 192.168.2.254
@@ -36,9 +37,10 @@ pivpn_pivpnNETv6: "fd11:5ee:bad:c0de::"
 pivpn_subnetClassv6: 64
 pivpn_ALLOWED_IPS: "0.0.0.0/0, ::0/0"
 pivpn_pivpnMTU: 1420
-pivpn_ pivpnDEV: wgo
+pivpn_ pivpnDEV: wg0
 pivpn_INSTALLED_PACKAGES: "(grepcidr bsdmainutils wireguard-tools qrencode)"
 
+# Vanilla Wireguard related configs.
 vanilla_wireguard_enabled: true
 wireguard_conf_dir: /etc/wireguard
 sys_ctl_path: "/etc/sysctl.conf"

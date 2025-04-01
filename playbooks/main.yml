@@ -41,6 +41,18 @@
 
     - include_tasks: "{{ playbook_dir }}/../tasks/vanilla_wireguard.yml"
       when: vanilla_wireguard_enabled
+      args:
+        apply:
+          tags:
+            - wireguard
+      tags:
+        - wireguard
 
     - include_tasks: "{{ playbook_dir }}/../tasks/pivpn.yml"
       when: not vanilla_wireguard_enabled
+      args:
+        apply:
+          tags:
+            - wireguard
+      tags:
+        - wireguard

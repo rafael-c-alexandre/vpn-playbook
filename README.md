@@ -2,7 +2,9 @@
 
 [![CI][badge-gh-actions]][link-gh-actions]
 
-This playbook installs and configures most of the software I use for my raspberry pi NAS. Some things are slightly difficult to automate and test, so I still have a few manual installation steps.
+This playbook installs and configures my debian-based [Wireguard](https://www.wireguard.com/) VPN configuration. The VPN can be installed in two different methods.
+- (Preferrable) Vanilla Wireguard, which installs and configures a plain Wireguard service.
+- (Experimental, not tested thoroughly yet) Wireguard through [PiVPN](https://www.pivpn.io/).
 
 ## Available playbooks
 
@@ -10,32 +12,21 @@ This project contains multiple playbooks that can run in sequence or separately.
 
 **`playbooks/prepare.yml`**: This playbook creates a new ansible user with a new private key in the target machine and changes the default ssh port.
 
-**`playbooks/main.yml`**: This playbook runs the major chunk of the NAS setup. It runs the following ansible roles:
+**`playbooks/main.yml`**: (requires prepare.yml to be run before) This playbook runs the major chunk of the VPN setup. It runs the following ansible roles:
 - `rafael-c-alexandre.security`
 - `rafel-c-alexandre.ntp`
-- `geerlingguy.docker`
-- `vladgh.samba`
 
-installs the following software:
-- [docker](https://www.docker.com/)
-- [samba](https://www.samba.org/)
-- [OMV 7](https://www.openmediavault.org/)
-- [immich](https://immich.app/) 
-- [rclone](https://rclone.org/) command line utility
+and installs a Wireguard server (by default in `/etc/wireguard/${INTERFACE}.conf)`), plus generates the requested clients configs (by default in `/etc/wireguard/peers`). 
 
-and copies my NAS backup configuration:
-- [backblaze B2](https://www.backblaze.com/cloud-storage) backup/restore scripts
-- logrotation files.
-
-**`playbooks/upgrade_immich.yml`**: This playbook pulls new immich-related docker images, if available, and restarts the compose service.
-
+**Note:** The steps performed during the vanilla Wireguard installation are based on the [How to set up wireguard on ubuntu 20.04](https://www.digitalocean.com/community/tutorials/how-to-set-up-wireguard-on-ubuntu-20-04
+) from Digital Ocean. 
 ## Installation
 
 The recommend installation guide is as follows:
 
 1. Ensure the Raspberry Pi has Pi OS installed and SSH running and reachable.
 2. Get the PI IP address or hostname through `ip a` (or any other network-related tool) or in the router UI.
-3. Add the IP address/hostname in an inventory file such as `inventories/hosts.local.ini`.
+3. Add the IP address/hostname in an inventory file such as `inventories/hosts.ini`.
 4. Clone or download this repository to your local drive.
 5. Run `ansible-galaxy install -r requirements.yml` inside this directory to install required Ansible roles and collections.
 6. To prepare the ansible environment,
@@ -45,7 +36,7 @@ The recommend installation guide is as follows:
 
 7. In order to copy the configurations needed for the `prepare` playbook, in the root folder, run 
 ```bash
-cp configs/ansible_pre_prepare.cfg ansible.cfg && cp configs/config_pre_prepare.yml config.yml && cp inventories/hosts.ini inventory`
+cp configs/ansible_pre_prepare.cfg ansible.cfg && cp configs/config_pre_prepare.yml config.yml && cp inventories/hosts.ini inventory
 ```
 8. In the root folder, run 
 ``` bash
@@ -56,136 +47,115 @@ ansible-playbook playbooks/prepare.yml
     - Add any custom configuration variables in a new `configs/config_after_prepare.yml` file, for instance, the two samba usernames (for me and my partner), respective shares, plus the common shared one.
 10. In order to copy the configurations needed for the `main` playbook, in the root folder, run 
 ```bash
-cp configs/ansible_after_prepare.cfg ansible.cfg && cp configs/config_after_prepare.yml config.yml && cp inventories/hosts.ini inventory` 
+cp configs/ansible_after_prepare.cfg ansible.cfg && cp configs/config_after_prepare.yml config.yml && cp inventories/hosts.ini inventory
 ``` 
 11. In the root folder, run  
 ``` bash
 ansible-playbook playbooks/main.yml
 ``` 
-12. (Additional) On demand,in the root folder, run (with the same 'after-prepare' configs)
+
+12. (Optional). If you just want to run a new configuration of Wireguard, or generate/edit/delete a peer, you can run 
 ```bash
-ansible-playbook playbooks/upgrade_immich.yml
+ansible-playbook playbooks/main.yml --tags wireguard
 ``` 
 
 ### Manual actions
 
-Automating the OMV configuration is difficult so when it comes to set OMV up, the following actions need to be performed manually.
+This set of playbooks does pretty much everything automatically. However, some actions still require manual intervention:
 
-  1. Login to OMV.
-  2. Create a RAID 1 array with the connected SSDs *(Storage -> Multiple Device)*.
-  3. Make two partitions to the RAID 1, with desired sizes (using `fdisk` or `parted`).
-  4. Create filesystems for both partitions *(Storage -> File Systems)*.
-  5. Add backup scheduled tasks *(System -> Scheduled Tasks)*. They should all belong to the dedicated backups user.
-        1. For shared SMB folder: `/usr/bin/bash /opt/scripts/backups/backup.sh -s /path/to/nas/partition/mounting/point/ -r pinas-backups-b2-crypt:nas`
-        2. For immich: `/usr/bin/bash /opt/scripts/backups/backup.sh -s /path/to/immich/partition/mounting/point/ -r pinas-backups-b2-crypt:immich`
-  6. Activate S.M.A.R.T. monitoring *(Storage -> S.M.A.R.T.)*
-        1. Add the two SSDs *(Devices)*.
-        2. Add scheduled `short self-test`s for the SSDs *(Scheduled Tasks)*.
-  7. Enable notifications through e-mail *(System -> Notifications -> Settings)*, by adding the correct SMTP configuration.
-  8. Replace `UPLOAD_LOCATION` and `DB_DATA_LOCATION` with the mounting points for the SSDs in the immich `.env` file.
-  9. Copy rclone config file to the backups user `/$HOME/.config/` location.
-  10. Change `/srv/mounting/points/` ownership to `root:{{ nas_group }}` and permissions to `2770`:
-  ```bash
-    chown -R root:{{ nas_group }} /srv/mounting/points/
-    chmod -R "2770" /srv/mounting/points/
-  ```
+1. If the VPN host is behid a device that performs NAT, port forwarding should be configured on that device to route any traffic on Wireguard's port (by default 51820) to the VPN host. Conversely, if the VPN host has a public IP address, this step is not necessary.
+
+2. In order to get the peers set up, we need to retrieve the configs from the peers folder. The main.yml playbook also installs [qrencode](https://linux.die.net/man/1/qrencode), which is an handy tool to generate QR codes out of the Wireguard peer config files, which can then be scanned with a mobile device. Example:
+```bash 
+ssh $USER@$VPN_HOST:$VPN_PORT -i ${IDENTITY_FILE}
+qrencode -t ansiutf8 < /etc/wireguard/peers/${CLIENT}.conf
+```
+
+Alternatively, the configs can be downloaded from the server through tools like [scp](https://linux.die.net/man/1/scp). Example: 
+```bash 
+scp $USER@$VPN_HOST:$VPN_PORT:/etc/wireguard/peers/${PEER} ${DESIREDTARGETLOCATION} -i ${IDENTITY_FILE}
+```
 
 ## Overriding Defaults
 
-You can override any of the defaults configured in `default.config.yml` by creating a `config.yml` file and setting the overrides in that file. For example, you can customize the omv or immich setup directories packages and apps with something like:
+You can override any of the defaults configured in `default.config.yml` by creating a `config.yml` file and setting the overrides in that file. For example, you can customize the wireguard ip addresses, interfaces and peers to be generated with something like:
 
 ```yaml
 ---
-ssh_pub_key_relative_location: ansible.pub
+ssh_pub_key_relative_location: ~/.ssh/ansible.pub
 
-security_enabled: true
-ntp_enabled: true
-docker_enabled: true
-omv_enabled: false
-samba_enabled: true
-immich_enabled: true
-
-nas_ssh_config_path: /etc/ssh/sshd_config
-nas_ssh_port: 2849
-nas_omv_port: 80
-nas_immich_port: 2283
-nas_smb_port: 445
-nas_rclone_port: 5572
-nas_user_group: nas
+ssh_config_path: /etc/ssh/sshd_config
+ssh_port: 2849
+wireguard_port: 51820
 
 security_ufw_rules:
   - rule: allow
-    to_port: "{{ nas_ssh_port }}"
+    to_port: "{{ ssh_port }}"
     protocol: tcp
     comment: allow-ssh
   - rule: allow
-    to_port: "{{ nas_omv_port }}"
-    protocol: tcp
-    comment: allow-omv
-  - rule: allow
-    to_port: "{{ nas_immich_port }}"
-    protocol: tcp
-    comment: allow-immich
-  - rule: allow
-    to_port: "{{ nas_smb_port }}"
-    protocol: tcp
-    comment: allow-smb
-  - rule: allow
-    to_port: "{{ nas_rclone_port }}"
-    protocol: tcp
-    comment: allow-rclone
+    to_port: "{{ wireguard_port }}"
+    protocol: udp
+    comment: allow-wireguard
 
-omv_work_dir: /tmp/omv
+# PiVPN related configs.
+pivpn_IPv4dev: eth0
+pivpn_IPv4addr: 192.168.2.13/24
+pivpn_IPv4gw: 192.168.2.254
+pivpn_dhcpReserv: 1
+pivpn_install_home: /root
+pivpn_install_user: root
+pivpn_VPN: wireguard
+pivpn_pivpnNET: 10.8.0.0
+pivpn_subnetClass: 24
+pivpn_pivpnPROTO: udp
+pivpn_pivpnPORT: "{{ wireguard_port }}"
+pivpn_pivpnDNS1: 9.9.9.9
+pivpn_pivpnDNS2: 149.112.112.112
+pivpn_pivpnHOST: 2.82.81.166
+pivpn_UNATTUPG: 0
+pivpn_IPv6dev: eth0
+pivpn_pivpnenableipv6: 1
+pivpn_pivpnNETv6: "fd11:5ee:bad:c0de::"
+pivpn_subnetClassv6: 64
+pivpn_ALLOWED_IPS: "0.0.0.0/0, ::0/0"
+pivpn_pivpnMTU: 1420
+pivpn_ pivpnDEV: wg0
+pivpn_INSTALLED_PACKAGES: "(grepcidr bsdmainutils wireguard-tools qrencode)"
 
-samba_enable_netbios: false
-samba_users:
-  - name: ansible
-    password: FIXME
-samba_shares:
-  - name: ansible
-    path: /ansible
-    comment: 'A test ansible share'
-    group: "{{ nas_user_group }}"
-    valid_users: ansible
-    create_mode: "0660"
-    force_create_mode: "0660"
-    directory_mode: "0770"
-    force_directory_mode: "0770"
-    read_only: false
-    browseable: false
+# Vanilla Wireguard related configs.
+vanilla_wireguard_enabled: true
+wireguard_conf_dir: /etc/wireguard
+sys_ctl_path: "/etc/sysctl.conf"
 
-immich_work_dir: /opt/immich
-immich_user: immich
+server:
+  wireguard_interface: wg0
+  wireguard_addresses:
+    - 10.8.0.1/24
+    - fd11:5ee:bad:c0de::a9c:1801/64
+  wireguard_mtu: 1420
+  wireguard_listen_port: "{{ wireguard_port }}"
+  wireguard_default_interface: eth0
 
-rclone_logrotate_config_path: /etc/logrotate.d/rclone
-rclone_log_file_path: /var/log/rclone-b2-backup.log
-rclone_remote_nas: pinas-backups-b2-crypt:nas
-rclone_remote_immich: pinas-backups-b2-crypt:immich
-rclone_backup_scripts_dir: /opt/scripts/backups
-
-backups_user: backups
-
-new_groups:
-  - "{{ nas_user_group }}"
-  - docker
-new_users:
-  - user: "{{ immich_user }}"
-    groups: "{{ nas_user_group }},docker"
-    system: true
-    shell: /usr/sbin/nologin
-  - user: "{{ backups_user }}"
-    groups: nas
-    system: true
-    shell: /usr/sbin/nologin
-
+peers:
+  - name: client_1
+    wireguard_addresses:
+      - 10.8.0.2/32
+      - fd11:5ee:bad:c0de::a9c:1802/128
+    wireguard_allowed_ips:
+      - 0.0.0.0/0
+      - ::0/0
+    wireguard_dns:
+      - 9.9.9.9
+      - 149.112.112.112
 ```
 
-Any variable can be overridden in `config.yml`; see the supporting roles' documentation for a complete list of available variables.
+Any variable can be overridden in `config.yml`; see the supporting roles' and documentation for a complete list of their available variables.
 
 
 ## Testing the Playbooks
 
-This project is [continuously tested on GitHub Actions](https://github.com/rafael-c-alexandre/nas-playbook/actions/workflows/ci.yml), where all its playbooks are tested in sequence. A note on this: as of now, OMV installation cannot be tested since it does not work with Docker.
+This project is [continuously tested on GitHub Actions](https://github.com/rafael-c-alexandre/vpn-playbook/actions/workflows/ci.yml), where all its playbooks are tested in sequence. A note on this: as of now, OMV installation cannot be tested since it does not work with Docker.
 
 
 License
@@ -193,5 +163,5 @@ License
 
 MIT
 
-[badge-gh-actions]: https://github.com/rafael-c-alexandre/nas-playbook/actions/workflows/ci.yml/badge.svg
-[link-gh-actions]: https://github.com/rafael-c-alexandre/nas-playbook/actions/workflows/ci.yml
+[badge-gh-actions]: https://github.com/rafael-c-alexandre/vpn-playbook/actions/workflows/ci.yml/badge.svg
+[link-gh-actions]: https://github.com/rafael-c-alexandre/vpn-playbook/actions/workflows/ci.yml
