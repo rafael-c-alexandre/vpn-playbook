@@ -36,7 +36,7 @@
       line: "net.ipv6.conf.all.forwarding=1"
   notify: reload sysctl
 
-- name: Check if server private key exisst and create if not.
+- name: Check if server private key exist and create if not.
   shell: |
     set -euo pipefail
     if [ -f "{{ wireguard_conf_dir }}/keys/server.priv" ]; then
@@ -50,20 +50,9 @@
   register: register_server_private_key
   changed_when: false
 
-- name: Get default server interface.
-  shell: |
-    set -euo pipefail
-    ip route show default | awk '{for(i=1;i<=NF;i++) if ($i=="dev") print $(i+1)}'
-  args:
-    executable: /bin/bash
-  register: register_default_interface
-  changed_when: false
+- include_tasks: "{{ playbook_dir }}/../tasks/network.yml"
 
-- name: Set default interface fact.
-  set_fact:
-    server: "{{ server | combine({'wireguard_default_interface': register_default_interface.stdout}) }}"
-
-- name: Check if server public key exisst and create if not.
+- name: Check if server public key exists and create if not.
   shell: |
     set -euo pipefail
     if [ -f "{{ wireguard_conf_dir }}/keys/server.pub" ]; then
@@ -84,20 +73,6 @@
 - name: Set server public key fact.
   set_fact:
     server: "{{ server | combine({'wireguard_public_key': register_server_public_key.stdout}) }}"
-
-- name: Retrieve and set public ip in case server.wireguard endpoint is not defined.
-  when: not server.wireguard_endpoint is defined
-  block:
-    - name: Get public IPv4 address.
-      uri:
-        url: https://api.ipify.org?format=text
-        return_content: true
-      register: register_wireguard_public_ip_v4
-
-    - name: Set server public ip.
-      set_fact:
-        server: "{{ server | combine({'wireguard_host': register_wireguard_public_ip_v4.content}) }}"
-      changed_when: false
 
 - name: Check if peer private keys exist and create if not.
   shell: |

@@ -39,17 +39,7 @@
       include_role:
         name: rafael-c-alexandre.ntp
 
-    - include_tasks: "{{ playbook_dir }}/../tasks/vanilla_wireguard.yml"
-      when: vanilla_wireguard_enabled
-      args:
-        apply:
-          tags:
-            - wireguard
-      tags:
-        - wireguard
-
-    - include_tasks: "{{ playbook_dir }}/../tasks/pivpn.yml"
-      when: not vanilla_wireguard_enabled
+    - include_tasks: "{{ playbook_dir }}/../tasks/{{ wireguard_installation_mode }}.yml"
       args:
         apply:
           tags:

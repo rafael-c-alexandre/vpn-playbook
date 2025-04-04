@@ -1,0 +1,27 @@
+---
+- name: Get default server interface.
+  shell: |
+    set -euo pipefail
+    ip route show default | awk '{for(i=1;i<=NF;i++) if ($i=="dev") print $(i+1)}'
+  args:
+    executable: /bin/bash
+  register: register_default_interface
+  changed_when: false
+
+- name: Set default interface fact.
+  set_fact:
+    server: "{{ server | combine({'wireguard_default_interface': register_default_interface.stdout}) }}"
+
+- name: Retrieve and set public ip in case server.wireguard endpoint is not defined.
+  when: not server.wireguard_endpoint is defined
+  block:
+    - name: Get public IPv4 address.
+      uri:
+        url: https://api.ipify.org?format=text
+        return_content: true
+      register: register_wireguard_public_ip_v4
+
+    - name: Set server public ip.
+      set_fact:
+        server: "{{ server | combine({'wireguard_host': register_wireguard_public_ip_v4.content}) }}"
+      changed_when: false

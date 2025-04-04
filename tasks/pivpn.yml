@@ -5,6 +5,8 @@
     dest: "/tmp/install.sh"
     mode: "0600"
 
+- include_tasks: "{{ playbook_dir }}/../tasks/network.yml"
+
 - name: Write variables to options.conf.
   template:
     src: "{{ playbook_dir }}/../templates/options.conf.j2"
