@@ -1,5 +1,7 @@
-{% if pivpn_IPv4dev is defined %}
-IPv4dev={{ pivpn_IPv4dev }}
+{% if server.wireguard_default_interface is defined %}
+IPv4dev={{ server.wireguard_default_interface }}
+pivpnDEV={{ pivpn_pivpnDEV }}
+IPv6dev={{ pivpn_IPv6dev }}
 {% endif %}
 {% if pivpn_IPv4addr is defined %}
 IPv4addr={{ pivpn_IPv4addr }}
@@ -24,9 +26,6 @@ VPN={{ pivpn_VPN }}
 {% endif %}
 {% if pivpn_pivpnNET is defined %}
 pivpnNET={{ pivpn_pivpnNET }}
-{% endif %}
-{% if pivpn_pivpnDEV is defined %}
-pivpnDEV={{ pivpn_pivpnDEV }}
 {% endif %}
 {% if pivpn_subnetClass is defined %}
 subnetClass={{ pivpn_subnetClass }}
@@ -61,9 +60,6 @@ USE_PREDEFINED_DH_PARAM={{ pivpn_USE_PREDEFINED_DH_PARAM }}
 {% if pivpn_UNATTUPG is defined %}
 UNATTUPG={{ pivpn_UNATTUPG }}
 {% endif %}
-{% if pivpn_IPv6dev is defined %}
-IPv6dev={{ pivpn_IPv6dev }}
-{% endif %}
 {% if pivpn_pivpnforceipv6route is defined %}
 pivpnforceipv6route={{ pivpn_pivpnforceipv6route }}
 {% endif %}
@@ -79,8 +75,8 @@ pivpnNETv6={{ pivpn_pivpnNETv6 }}
 {% if pivpn_subnetClassv6 is defined %}
 subnetClassv6={{ pivpn_subnetClassv6 }}
 {% endif %}
-{% if pivpn_ALLOWED_IPS is defined %}
-ALLOWED_IPS={{ pivpn_ALLOWED_IPS }}
+{% if wireguard_peers_allowed_ips is defined %}
+ALLOWED_IPS={{ wireguard_peers_allowed_ips | join(', ') }}
 {% endif %}
 {% if pivpn_pivpnMTU is defined %}
 pivpnMTU={{ pivpn_pivpnMTU }}

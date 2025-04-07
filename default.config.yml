@@ -5,10 +5,14 @@ ssh_config_path: /etc/ssh/sshd_config
 ssh_port: 2849
 wireguard_port: 51820
 wireguard_interface: wg0
-wireguard_installation_mode: vanilla_wireguard # 'vanilla_wireguard' or 'pivpn'.
+wireguard_installation_mode: pivpn # 'vanilla_wireguard' or 'pivpn'.
+wireguard_conf_dir: /etc/wireguard
 wireguard_peers_allowed_ips:
   - 0.0.0.0/0
   - ::0/0
+wireguard_dns:
+  - 9.9.9.9
+  - 149.112.112.112
 
 server:
   wireguard_interface: "{{ wireguard_interface }}"
@@ -18,9 +22,17 @@ server:
   wireguard_mtu: 1420
   wireguard_listen_port: "{{ wireguard_port }}"
   wireguard_default_interface: eth0
-  # Define this following variable if there is a dynamic DNS record
+  # Define the following variable if there is a dynamic DNS record
   # for the VPN server.
   # wireguard endpoint: pivpn.ddns.net
+
+peers:
+  - name: client_1
+    wireguard_addresses:
+      - 10.8.0.2/32
+      - fd11:5ee:bad:c0de::a9c:1802/128
+    wireguard_allowed_ips: "{{ wireguard_peers_allowed_ips }}"
+    wireguard_dns: "{{ wireguard_dns }}"
 
 security_ufw_rules:
   - rule: allow
@@ -32,9 +44,9 @@ security_ufw_rules:
     protocol: udp
     comment: allow-wireguard
 
+sys_ctl_path: "/etc/sysctl.conf"
+
 # PiVPN related configs
-# pivpn_IPv4addr: 192.168.2.13/24
-# pivpn_IPv4gw: 192.168.2.254
 pivpn_dhcpReserv: 1
 pivpn_install_home: /root
 pivpn_install_user: root
@@ -45,25 +57,14 @@ pivpn_pivpnPROTO: udp
 pivpn_pivpnPORT: "{{ wireguard_port }}"
 pivpn_pivpnDNS1: 9.9.9.9
 pivpn_pivpnDNS2: 149.112.112.112
-pivpn_UNATTUPG: 1
+pivpn_UNATTUPG: 0
 pivpn_pivpnenableipv6: 1
 pivpn_pivpnNETv6: "fd11:5ee:bad:c0de::"
 pivpn_subnetClassv6: 64
 pivpn_pivpnDEV: "{{ wireguard_interface }}"
+pivpn_IPv6dev: "{{ wireguard_interface }}"
 pivpn_INSTALLED_PACKAGES: "(grepcidr bsdmainutils wireguard-tools qrencode)"
-
-# Vanilla Wireguard related configs.
-wireguard_conf_dir: /etc/wireguard
-sys_ctl_path: "/etc/sysctl.conf"
-
-peers:
-  - name: client_1
-    wireguard_addresses:
-      - 10.8.0.2/32
-      - fd11:5ee:bad:c0de::a9c:1802/128
-    wireguard_allowed_ips:
-      - 0.0.0.0/0
-      - ::0/0
-    wireguard_dns:
-      - 9.9.9.9
-      - 149.112.112.112
+# Define the following two variable if the VPN server
+# is behind a NAT gateway.
+# pivpn_IPv4addr: 192.168.2.13/24
+# pivpn_IPv4gw: 192.168.2.254

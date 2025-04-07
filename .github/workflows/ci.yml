@@ -36,6 +36,8 @@ jobs:
       - name: Install test dependencies.
         run: |
           pip3 install ansible
+          sudo apt update
+          sudo apt install wireguard
 
       - name: Setup SSH server.
         uses: rafael-c-alexandre/ansible-devops/.github/actions/start-ssh-server@main

@@ -19,8 +19,8 @@
   with_items:
     - "{{ wireguard_conf_dir }}"
     - "{{ wireguard_conf_dir }}/keys"
-    - "{{ wireguard_conf_dir }}/peers"
-    - "{{ wireguard_conf_dir }}/peers/keys"
+    - "{{ wireguard_conf_dir }}/configs"
+    - "{{ wireguard_conf_dir }}/configs/keys"
 
 - name: Configure IP forwarding.
   lineinfile:
@@ -77,11 +77,11 @@
 - name: Check if peer private keys exist and create if not.
   shell: |
     set -euo pipefail
-    if [ -f "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.priv" ]; then
-      cat "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.priv"
+    if [ -f "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}.priv" ]; then
+      cat "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}.priv"
     else
-      wg genkey | tee "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.priv"
-      chmod 600 "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.priv"
+      wg genkey | tee "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}.priv"
+      chmod 600 "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}.priv"
     fi
   args:
     executable: /bin/bash
@@ -92,11 +92,11 @@
 - name: Check if peer public keys exist and create if not.
   shell: |
     set -euo pipefail
-    if [ -f "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.pub" ]; then
-       cat "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.pub"
+    if [ -f "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}.pub" ]; then
+       cat "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}.pub"
     else
-      cat "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.priv" | wg pubkey | tee "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.pub"
-      chmod 600 "{{ wireguard_conf_dir }}/peers/keys/{{ item.name }}.pub"
+      cat "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}.priv" | wg pubkey | tee "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}.pub"
+      chmod 600 "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}.pub"
     fi
   args:
     executable: /bin/bash
@@ -124,13 +124,13 @@
 - name: Generate peers config from template.
   template:
     src: "{{ playbook_dir }}/../templates/vanilla-wireguard/peer.conf.j2"
-    dest: "{{ wireguard_conf_dir }}/peers/{{ item.name }}.conf"
+    dest: "{{ wireguard_conf_dir }}/configs/{{ item.name }}.conf"
     mode: "0600"
   with_items: "{{ peers }}"
 
 - name: Register all keep peers paths.
   find:
-    paths: ["{{ wireguard_conf_dir }}/peers", "{{ wireguard_conf_dir }}/peers/keys"]
+    paths: ["{{ wireguard_conf_dir }}/configs", "{{ wireguard_conf_dir }}/configs/keys"]
   register: found_peer_files
 
 - name: Remove peer files that are not in the keep list.
