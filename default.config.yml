@@ -5,7 +5,7 @@ ssh_config_path: /etc/ssh/sshd_config
 ssh_port: 2849
 wireguard_port: 51820
 wireguard_interface: wg0
-wireguard_installation_mode: pivpn # 'vanilla_wireguard' or 'pivpn'.
+wireguard_installation_mode: vanilla_wireguard # 'vanilla_wireguard' or 'pivpn'.
 wireguard_conf_dir: /etc/wireguard
 wireguard_peers_allowed_ips:
   - 0.0.0.0/0

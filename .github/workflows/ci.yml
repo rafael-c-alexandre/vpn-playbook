@@ -19,8 +19,57 @@ jobs:
     with:
       lint_path: "./playbooks/"
 
-  playbook-test:
-    name: Run playbook test
+  playbook-test-vanilla-wireguard:
+    name: Run playbook test (Vanilla Wireguard)
+    runs-on: ubuntu-22.04
+    needs: lint
+
+    steps:
+      - name: Check out the codebase.
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install test dependencies.
+        run: |
+          pip3 install ansible
+          sudo apt update
+
+      - name: Setup SSH server.
+        uses: rafael-c-alexandre/ansible-devops/.github/actions/start-ssh-server@main
+        with:
+          ssh_private_key_path: "$TEST_CONFIGS_PATH/keys/ci"
+          ssh_public_key_path: "$TEST_CONFIGS_PATH/keys/ci.pub"
+
+      - name: Download ansible roles.
+        run: |
+          cp $TEST_CONFIGS_PATH/ansible_pre_prepare.cfg ansible.cfg
+          ansible-galaxy install -r requirements.yml
+
+      - name: Fix ansible private keys permissions.
+        run: chmod 600 $TEST_CONFIGS_PATH/keys/ci $TEST_CONFIGS_PATH/keys/ansible
+
+      - name: Run prepare.yml playbook test.
+        uses: rafael-c-alexandre/ansible-devops/.github/actions/playbook-test@main
+        with:
+          playbook_path: "./playbooks/prepare.yml"
+          ansible_cfg_path: "$TEST_CONFIGS_PATH/ansible_pre_prepare.cfg"
+          inventory_path: "$TEST_CONFIGS_PATH/inventory.ini"
+          config_path: "$TEST_CONFIGS_PATH/config_pre_prepare.yml"
+
+      - name: Run main.yml playbook test.
+        uses: rafael-c-alexandre/ansible-devops/.github/actions/playbook-test@main
+        with:
+          playbook_path: "./playbooks/main.yml"
+          ansible_cfg_path: "$TEST_CONFIGS_PATH/ansible_after_prepare.cfg"
+          inventory_path: "$TEST_CONFIGS_PATH/inventory.ini"
+          config_path: "$TEST_CONFIGS_PATH/config_after_prepare_vanilla_wireguard.yml"
+
+  playbook-test-pivpn:
+    name: Run playbook test (PiVPN)
     runs-on: ubuntu-22.04
     needs: lint
 
@@ -67,4 +116,4 @@ jobs:
           playbook_path: "./playbooks/main.yml"
           ansible_cfg_path: "$TEST_CONFIGS_PATH/ansible_after_prepare.cfg"
           inventory_path: "$TEST_CONFIGS_PATH/inventory.ini"
-          config_path: "$TEST_CONFIGS_PATH/config_after_prepare.yml"
+          config_path: "$TEST_CONFIGS_PATH/config_after_prepare_pivpn.yml"
