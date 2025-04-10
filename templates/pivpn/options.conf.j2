@@ -1,5 +1,5 @@
-{% if server.wireguard_default_interface is defined %}
-IPv4dev={{ server.wireguard_default_interface }}
+{% if server.default_interface is defined %}
+IPv4dev={{ server.default_interface }}
 pivpnDEV={{ pivpn_pivpnDEV }}
 IPv6dev={{ pivpn_IPv6dev }}
 {% endif %}

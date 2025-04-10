@@ -9,7 +9,7 @@ MTU = {{ server.wireguard_mtu }}
 {% if server.wireguard_listen_port is defined %}
 ListenPort = {{ server.wireguard_listen_port }}
 {% endif %}
-PreUp = ufw route allow in on {{ server.wireguard_interface }} out on {{ server.wireguard_default_interface }}; iptables -t nat -I POSTROUTING -o {{ server.wireguard_default_interface }} -j MASQUERADE; ip6tables -t nat -I POSTROUTING -o {{ server.wireguard_default_interface }} -j MASQUERADE
+PreUp = ufw route allow in on {{ server.wireguard_interface }} out on {{ server.default_interface }}; iptables -t nat -I POSTROUTING -o {{ server.default_interface }} -j MASQUERADE; ip6tables -t nat -I POSTROUTING -o {{ server.default_interface }} -j MASQUERADE
 PostDown = ufw route delete allow in on {{ server.wireguard_interface }} out on {{ server.wireguard_interface }}; iptables -t nat -D POSTROUTING -o {{ server.wireguard_interface }} -j MASQUERADE; ip6tables -t nat -D POSTROUTING -o {{ server.wireguard_interface }} -j MASQUERADE
 
 {% if peers is defined %}

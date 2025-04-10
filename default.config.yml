@@ -1,9 +1,21 @@
 ---
 ssh_pub_key_relative_location: ~/.ssh/ansible.pub
-
 ssh_config_path: /etc/ssh/sshd_config
 ssh_port: 2849
 wireguard_port: 51820
+
+security_ufw_rules:
+  - rule: allow
+    to_port: "{{ ssh_port }}"
+    protocol: tcp
+    comment: allow-ssh
+  - rule: allow
+    to_port: "{{ wireguard_port }}"
+    protocol: udp
+    comment: allow-wireguard
+
+sys_ctl_path: "/etc/sysctl.conf"
+
 wireguard_interface: wg0
 wireguard_installation_mode: vanilla_wireguard # 'vanilla_wireguard' or 'pivpn'.
 wireguard_conf_dir: /etc/wireguard
@@ -21,10 +33,10 @@ server:
     - fd11:5ee:bad:c0de::a9c:1801/64
   wireguard_mtu: 1420
   wireguard_listen_port: "{{ wireguard_port }}"
-  wireguard_default_interface: eth0
+  default_interface: eth0
   # Define the following variable if there is a dynamic DNS record
   # for the VPN server.
-  # wireguard endpoint: pivpn.ddns.net
+  # wireguard_ddns_name: pivpn.ddns.net
 
 peers:
   - name: client_1
@@ -33,18 +45,6 @@ peers:
       - fd11:5ee:bad:c0de::a9c:1802/128
     wireguard_allowed_ips: "{{ wireguard_peers_allowed_ips }}"
     wireguard_dns: "{{ wireguard_dns }}"
-
-security_ufw_rules:
-  - rule: allow
-    to_port: "{{ ssh_port }}"
-    protocol: tcp
-    comment: allow-ssh
-  - rule: allow
-    to_port: "{{ wireguard_port }}"
-    protocol: udp
-    comment: allow-wireguard
-
-sys_ctl_path: "/etc/sysctl.conf"
 
 # PiVPN related configs
 pivpn_dhcpReserv: 1

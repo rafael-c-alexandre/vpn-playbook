@@ -3,9 +3,9 @@
 [![CI][badge-gh-actions]][link-gh-actions]
 
 This project installs and configures my debian-based [Wireguard](https://www.wireguard.com/) VPN configuration. In addition, since exposing a VPN to the internet can be a security risk if you don't know what you're doing, this project also sets up some features and services to enhance the server security. The VPN can be installed in two different methods.
-- (Preferrable) Vanilla Wireguard, which installs and configures a plain Wireguard service.
+- Vanilla Wireguard, which installs and configures a plain Wireguard service.
 **Note:** The steps performed during the vanilla Wireguard installation are based on the [How to set up wireguard on ubuntu 20.04](https://www.digitalocean.com/community/tutorials/how-to-set-up-wireguard-on-ubuntu-20-04) article from Digital Ocean. 
-- (Experimental, not tested thoroughly yet) Wireguard through [PiVPN](https://www.pivpn.io/).
+- Wireguard through [PiVPN](https://www.pivpn.io/).
 **Note:** The steps performed during the PiVPN Wireguard installation are based on the [PiVPN officiak website](https://www.pivpn.io/). 
 
 ## Available playbooks
@@ -66,7 +66,7 @@ This set of playbooks does pretty much everything automatically. However, some a
 
 1. If the VPN host is behid a device that performs NAT, port forwarding should be configured on that device to route any traffic on Wireguard's port (by default 51820) to the VPN host. Conversely, if the VPN host has a public IP address, this step is not necessary.
 
-2. In order to get the peers set up, we need to retrieve the configs from the peers folder. The main.yml playbook also installs [qrencode](https://linux.die.net/man/1/qrencode), which is an handy tool to generate QR codes out of the Wireguard peer config files, which can then be scanned with a mobile device. Example:
+2. In order to get the peers set up, we need to retrieve the configs from the peer configs folder. The main.yml playbook also installs [qrencode](https://linux.die.net/man/1/qrencode), which is an handy tool to generate QR codes out of the Wireguard peer config files, which can then be scanned with a mobile device. Example:
 ```bash 
 ssh $USER@$VPN_HOST:$VPN_PORT -i ${IDENTITY_FILE}
 qrencode -t ansiutf8 < /etc/wireguard/configs/${CLIENT}.conf
@@ -83,14 +83,25 @@ You can override any of the defaults configured in `default.config.yml` by creat
 
 ```yaml
 ---
----
 ssh_pub_key_relative_location: ~/.ssh/ansible.pub
-
 ssh_config_path: /etc/ssh/sshd_config
 ssh_port: 2849
 wireguard_port: 51820
+
+security_ufw_rules:
+  - rule: allow
+    to_port: "{{ ssh_port }}"
+    protocol: tcp
+    comment: allow-ssh
+  - rule: allow
+    to_port: "{{ wireguard_port }}"
+    protocol: udp
+    comment: allow-wireguard
+
+sys_ctl_path: "/etc/sysctl.conf"
+
 wireguard_interface: wg0
-wireguard_installation_mode: pivpn # 'vanilla_wireguard' or 'pivpn'.
+wireguard_installation_mode: vanilla_wireguard # 'vanilla_wireguard' or 'pivpn'.
 wireguard_conf_dir: /etc/wireguard
 wireguard_peers_allowed_ips:
   - 0.0.0.0/0
@@ -106,10 +117,10 @@ server:
     - fd11:5ee:bad:c0de::a9c:1801/64
   wireguard_mtu: 1420
   wireguard_listen_port: "{{ wireguard_port }}"
-  wireguard_default_interface: eth0
+  default_interface: eth0
   # Define the following variable if there is a dynamic DNS record
   # for the VPN server.
-  # wireguard endpoint: pivpn.ddns.net
+  # wireguard_ddns_name: pivpn.ddns.net
 
 peers:
   - name: client_1
@@ -118,16 +129,6 @@ peers:
       - fd11:5ee:bad:c0de::a9c:1802/128
     wireguard_allowed_ips: "{{ wireguard_peers_allowed_ips }}"
     wireguard_dns: "{{ wireguard_dns }}"
-
-security_ufw_rules:
-  - rule: allow
-    to_port: "{{ ssh_port }}"
-    protocol: tcp
-    comment: allow-ssh
-  - rule: allow
-    to_port: "{{ wireguard_port }}"
-    protocol: udp
-    comment: allow-wireguard
 
 # PiVPN related configs
 pivpn_dhcpReserv: 1
@@ -151,6 +152,7 @@ pivpn_INSTALLED_PACKAGES: "(grepcidr bsdmainutils wireguard-tools qrencode)"
 # is behind a NAT gateway.
 # pivpn_IPv4addr: 192.168.2.13/24
 # pivpn_IPv4gw: 192.168.2.254
+
 ```
 
 Any variable can be overridden in `config.yml`; see the supporting roles' and documentation for a complete list of their available variables.
@@ -158,7 +160,7 @@ Any variable can be overridden in `config.yml`; see the supporting roles' and do
 
 ## Testing the Playbooks
 
-This project is [continuously tested on GitHub Actions](https://github.com/rafael-c-alexandre/vpn-playbook/actions/workflows/ci.yml), where all its playbooks are tested in sequence. A note on this: as of now, OMV installation cannot be tested since it does not work with Docker.
+This project is [continuously tested on GitHub Actions](https://github.com/rafael-c-alexandre/vpn-playbook/actions/workflows/ci.yml), where all its playbooks are tested in sequence (including both VPN installation options).
 
 
 License
