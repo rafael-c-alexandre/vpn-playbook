@@ -1,4 +1,4 @@
-# NAS setup Ansible Playbook
+# Wireguard VPN Ansible setup
 
 [![CI][badge-gh-actions]][link-gh-actions]
 
