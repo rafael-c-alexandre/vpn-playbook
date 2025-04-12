@@ -28,6 +28,13 @@ jobs:
       - name: Check out the codebase.
         uses: actions/checkout@v4
 
+      - name: Setup necessary ssh keys for testing.
+        run: |
+          # SSH key necessary for initial SSH login.
+          ssh-keygen -t rsa -b 4096 -f $TEST_CONFIGS_PATH/keys/ci -N ""
+          # SSH key necessary for new ansible user.
+          ssh-keygen -t rsa -b 4096 -f $TEST_CONFIGS_PATH/keys/ansible -N ""
+
       - name: Set up Python 3.
         uses: actions/setup-python@v5
         with:
@@ -76,6 +83,13 @@ jobs:
     steps:
       - name: Check out the codebase.
         uses: actions/checkout@v4
+
+      - name: Setup necessary ssh keys for testing.
+        run: |
+          # SSH key necessary for initial SSH login.
+          ssh-keygen -t rsa -b 4096 -f $TEST_CONFIGS_PATH/keys/ci -N ""
+          # SSH key necessary for new ansible user.
+          ssh-keygen -t rsa -b 4096 -f $TEST_CONFIGS_PATH/keys/ansible -N ""
 
       - name: Set up Python 3.
         uses: actions/setup-python@v5
