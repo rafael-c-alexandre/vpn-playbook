@@ -1,5 +1,5 @@
-{% if server.default_interface is defined %}
-IPv4dev={{ server.default_interface }}
+{% if wireguard_server_default_interface is defined %}
+IPv4dev={{ wireguard_server_default_interface }}
 pivpnDEV={{ pivpn_pivpnDEV }}
 IPv6dev={{ pivpn_IPv6dev }}
 {% endif %}
@@ -84,6 +84,6 @@ pivpnMTU={{ pivpn_pivpnMTU }}
 {% if pivpn_pivpnPERSISTENTKEEPALIVE is defined %}
 pivpnPERSISTENTKEEPALIVE={{ pivpn_pivpnPERSISTENTKEEPALIVE }}
 {% endif %}
-{% if pivpn_pivpn_INSTALLED_PACKAGES is defined %}
-pivpn_INSTALLED_PACKAGES={{ pivpn_pivpn_INSTALLED_PACKAGES }}
+{% if pivpn_pivpnINSTALLED_PACKAGES is defined %}
+pivpn_INSTALLED_PACKAGES={{ pivpn_pivpnINSTALLED_PACKAGES }}
 {% endif %}

@@ -1,19 +1,19 @@
 [Interface]
-PrivateKey = {{ server.wireguard_private_key }}
-{% if server.wireguard_addresses is defined %}
-Address = {{ server.wireguard_addresses | join(', ') }}
+PrivateKey = {{ wireguard_server_private_key }}
+{% if wireguard_server_addresses is defined %}
+Address = {{ wireguard_server_addresses | join(', ') }}
 {% endif %}
-{% if server.wireguard_mtu is defined %}
-MTU = {{ server.wireguard_mtu }}
+{% if wireguard_server_mtu is defined %}
+MTU = {{ wireguard_server_mtu }}
 {% endif %}
-{% if server.wireguard_listen_port is defined %}
-ListenPort = {{ server.wireguard_listen_port }}
+{% if wireguard_server_listen_port is defined %}
+ListenPort = {{ wireguard_server_listen_port }}
 {% endif %}
-PreUp = ufw route allow in on {{ server.wireguard_interface }} out on {{ server.default_interface }}; iptables -t nat -I POSTROUTING -o {{ server.default_interface }} -j MASQUERADE; ip6tables -t nat -I POSTROUTING -o {{ server.default_interface }} -j MASQUERADE
-PostDown = ufw route delete allow in on {{ server.wireguard_interface }} out on {{ server.wireguard_interface }}; iptables -t nat -D POSTROUTING -o {{ server.wireguard_interface }} -j MASQUERADE; ip6tables -t nat -D POSTROUTING -o {{ server.wireguard_interface }} -j MASQUERADE
+PostUp = ufw route allow in on {{ wireguard_server_interface }} out on {{ wireguard_server_default_interface }}; iptables -t nat -I POSTROUTING -o {{ wireguard_server_default_interface }} -j MASQUERADE; ip6tables -t nat -I POSTROUTING -o {{ wireguard_server_default_interface }} -j MASQUERADE
+PreDown = ufw route delete allow in on {{ wireguard_server_interface }} out on {{ wireguard_server_default_interface }}; iptables -t nat -D POSTROUTING -o {{ wireguard_server_default_interface }} -j MASQUERADE; ip6tables -t nat -D POSTROUTING -o {{ wireguard_server_default_interface }} -j MASQUERADE
 
-{% if peers is defined %}
-{% for peer in peers %}
+{% if wireguard_peers is defined %}
+{% for peer in wireguard_peers %}
 ### begin {{ peer.name }} ###
 [Peer]
 PublicKey = {{ peers_keys['wireguard_public_key_' + peer.name] }}

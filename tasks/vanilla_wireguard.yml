@@ -7,7 +7,7 @@
       - qrencode # Useful for generating QR codes for mobile clients.
     state: present
   register: result
-  retries: 5 # Retry because this task might fail due to unattended-upgrades.
+  retries: 10 # Retry because this task might fail due to unattended-upgrades.
   delay: 20
   until: result is success
 
@@ -39,11 +39,11 @@
 - name: Check if server private key exist and create if not.
   shell: |
     set -euo pipefail
-    if [ -f "{{ wireguard_conf_dir }}/keys/server.priv" ]; then
-      cat "{{ wireguard_conf_dir }}/keys/server.priv"
+    if [ -f "{{ wireguard_conf_dir }}/keys/server" ]; then
+      cat "{{ wireguard_conf_dir }}/keys/server"
     else
-      wg genkey | tee "{{ wireguard_conf_dir }}/keys/server.priv"
-      chmod 600 "{{ wireguard_conf_dir }}/keys/server.priv"
+      wg genkey | tee "{{ wireguard_conf_dir }}/keys/server"
+      chmod 600 "{{ wireguard_conf_dir }}/keys/server"
     fi
   args:
     executable: /bin/bash
@@ -58,7 +58,7 @@
     if [ -f "{{ wireguard_conf_dir }}/keys/server.pub" ]; then
       cat "{{ wireguard_conf_dir }}/keys/server.pub"
     else
-      cat "{{ wireguard_conf_dir }}/keys/server.priv" | wg pubkey | tee "{{ wireguard_conf_dir }}/keys/server.pub"
+      cat "{{ wireguard_conf_dir }}/keys/server" | wg pubkey | tee "{{ wireguard_conf_dir }}/keys/server.pub"
       chmod 600 "{{ wireguard_conf_dir }}/keys/server.pub"
     fi
   args:
@@ -68,26 +68,26 @@
 
 - name: Set server private key fact.
   set_fact:
-    server: "{{ server | combine({'wireguard_private_key': register_server_private_key.stdout}) }}"
+    wireguard_server_private_key: "{{ register_server_private_key.stdout }}"
 
 - name: Set server public key fact.
   set_fact:
-    server: "{{ server | combine({'wireguard_public_key': register_server_public_key.stdout}) }}"
+    wireguard_server_public_key: "{{ register_server_public_key.stdout }}"
 
 - name: Check if peer private keys exist and create if not.
   shell: |
     set -euo pipefail
-    if [ -f "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}.priv" ]; then
-      cat "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}.priv"
+    if [ -f "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}" ]; then
+      cat "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}"
     else
-      wg genkey | tee "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}.priv"
-      chmod 600 "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}.priv"
+      wg genkey | tee "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}"
+      chmod 600 "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}"
     fi
   args:
     executable: /bin/bash
   register: register_peer_private_key
   changed_when: false
-  with_items: "{{ peers }}"
+  with_items: "{{ wireguard_peers }}"
 
 - name: Check if peer public keys exist and create if not.
   shell: |
@@ -95,14 +95,14 @@
     if [ -f "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}.pub" ]; then
        cat "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}.pub"
     else
-      cat "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}.priv" | wg pubkey | tee "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}.pub"
+      cat "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}" | wg pubkey | tee "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}.pub"
       chmod 600 "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}.pub"
     fi
   args:
     executable: /bin/bash
   register: register_peer_public_key
   changed_when: false
-  with_items: "{{ peers }}"
+  with_items: "{{ wireguard_peers }}"
 
 - name: Set peers private keys fact.
   set_fact:
@@ -117,7 +117,7 @@
 - name: Generate Wireguard configuration file.
   template:
     src: "{{ playbook_dir }}/../templates/vanilla-wireguard/wg.conf.j2"
-    dest: "{{ wireguard_conf_dir }}/{{ server.wireguard_interface }}.conf"
+    dest: "{{ wireguard_conf_dir }}/{{ wireguard_server_interface }}.conf"
     mode: "0600"
   notify: reload wireguard
 
@@ -126,7 +126,7 @@
     src: "{{ playbook_dir }}/../templates/vanilla-wireguard/peer.conf.j2"
     dest: "{{ wireguard_conf_dir }}/configs/{{ item.name }}.conf"
     mode: "0600"
-  with_items: "{{ peers }}"
+  with_items: "{{ wireguard_peers }}"
 
 - name: Register all keep peers paths.
   find:
@@ -137,11 +137,11 @@
   file:
     path: "{{ item.path }}"
     state: absent
-  when: item.path | basename | regex_replace('(\.conf$|\.priv$|\.pub$)', '') not in peers | map(attribute='name') | list
+  when: item.path | basename | regex_replace('(\.conf$|\.pub$)', '') not in wireguard_peers | map(attribute='name') | list
   with_items: ["{{ found_peer_files.files }}"]
 
 - name: Ensure Wireguard is started and enabled at boot.
   service:
-    name: "wg-quick@{{ server.wireguard_interface }}"
+    name: "wg-quick@{{ wireguard_server_interface }}"
     state: started
     enabled: true

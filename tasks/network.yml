@@ -10,10 +10,10 @@
 
 - name: Set default interface fact.
   set_fact:
-    server: "{{ server | combine({'default_interface': register_default_interface.stdout}) }}"
+    wireguard_server_default_interface: "{{ register_default_interface.stdout }}"
 
 - name: Retrieve and set public ip in case server.wireguard endpoint is not defined.
-  when: not server.wireguard_ddns_name is defined
+  when: not wireguard_server_ddns_name is defined
   block:
     - name: Get public IPv4 address.
       uri:
@@ -23,5 +23,5 @@
 
     - name: Set server public ip.
       set_fact:
-        server: "{{ server | combine({'wireguard_host': register_wireguard_public_ip_v4.content}) }}"
+        wireguard_server_host: "{{ register_wireguard_public_ip_v4.content }}"
       changed_when: false

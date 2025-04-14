@@ -110,19 +110,18 @@ wireguard_dns:
   - 9.9.9.9
   - 149.112.112.112
 
-server:
-  wireguard_interface: "{{ wireguard_interface }}"
-  wireguard_addresses:
-    - 10.8.0.1/24
-    - fd11:5ee:bad:c0de::a9c:1801/64
-  wireguard_mtu: 1420
-  wireguard_listen_port: "{{ wireguard_port }}"
-  default_interface: eth0
-  # Define the following variable if there is a dynamic DNS record
-  # for the VPN server.
-  # wireguard_ddns_name: pivpn.ddns.net
+wireguard_server_interface: "{{ wireguard_interface }}"
+wireguard_server_addresses:
+  - 10.8.0.1/24
+  - fd11:5ee:bad:c0de::a9c:1801/64
+wireguard_server_mtu: 1420
+wireguard_server_listen_port: "{{ wireguard_port }}"
+wireguard_server_default_interface: eth0
+# Define the following variable if there is a dynamic DNS record
+# for the VPN server.
+# wireguard_server_ddns_name: pivpn.ddns.net
 
-peers:
+wireguard_peers:
   - name: client_1
     wireguard_addresses:
       - 10.8.0.2/32
@@ -147,7 +146,7 @@ pivpn_pivpnNETv6: "fd11:5ee:bad:c0de::"
 pivpn_subnetClassv6: 64
 pivpn_pivpnDEV: "{{ wireguard_interface }}"
 pivpn_IPv6dev: "{{ wireguard_interface }}"
-pivpn_INSTALLED_PACKAGES: "(grepcidr bsdmainutils wireguard-tools qrencode)"
+pivpn_pivpnINSTALLED_PACKAGES: "(grepcidr bsdmainutils wireguard-tools qrencode)"
 # Define the following two variable if the VPN server
 # is behind a NAT gateway.
 # pivpn_IPv4addr: 192.168.2.13/24

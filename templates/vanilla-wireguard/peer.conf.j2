@@ -8,14 +8,14 @@ DNS = {{ item.wireguard_dns | join(', ') }}
 {% endif %}
 
 [Peer]
-PublicKey = {{ server.wireguard_public_key }}
-{% if server.wireguard_preshared_key is defined %}
-PresharedKey = {{ server.wireguard_preshared_key }}
+PublicKey = {{ wireguard_server_public_key }}
+{% if wireguard_server_preshared_key is defined %}
+PresharedKey = {{ wireguard_server_preshared_key }}
 {% endif %}
-{% if server.wireguard_ddns_name is defined %}
-Endpoint = {{ server.wireguard_ddns_name }}
+{% if wireguard_server_ddns_name is defined %}
+Endpoint = {{ wireguard_server_ddns_name }}
 {% else %}
-Endpoint = {{ server.wireguard_host }}:{{ wireguard_port }}
+Endpoint = {{ wireguard_server_host }}:{{ wireguard_port }}
 {%  endif %}
 {% if item.wireguard_allowed_ips is defined %}
 AllowedIPs = {{ item.wireguard_allowed_ips | join(', ') }}

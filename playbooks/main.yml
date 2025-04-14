@@ -19,7 +19,7 @@
 
   handlers:
     - name: reload wireguard
-      shell: "wg syncconf {{ server.wireguard_interface }} <(wg-quick strip {{ server.wireguard_interface }})"
+      shell: "wg syncconf {{ wireguard_server_interface }} <(wg-quick strip {{ wireguard_server_interface }})"
       args:
         executable: /bin/bash
       changed_when: false

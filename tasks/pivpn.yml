@@ -46,7 +46,7 @@
 
 - name: Set variable with peer names to keep.
   set_fact:
-    keep_peers: "{{ peers | map(attribute='name') | list }}"
+    keep_peers: "{{ wireguard_peers | map(attribute='name') | list }}"
 
 - name: Remove peers that are not in the keep list.
   command: "pivpn -r {{ item }} -y"
@@ -55,6 +55,6 @@
 
 - name: Add peers that are in the keep list.
   command: "pivpn -a -n {{ item.name }} -ip {{ item.wireguard_addresses[0].split('/')[0] }}"
-  with_items: "{{ peers }}"
+  with_items: "{{ wireguard_peers }}"
   failed_when: false
   changed_when: false
