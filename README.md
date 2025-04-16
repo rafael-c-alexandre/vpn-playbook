@@ -2,7 +2,7 @@
 
 [![CI][badge-gh-actions]][link-gh-actions]
 
-This project installs and configures my debian-based [Wireguard](https://www.wireguard.com/) VPN configuration. In addition, since exposing a VPN to the internet can be a security risk if you don't know what you're doing, this project also sets up some features and services to enhance the server security. The VPN can be installed in two different methods.
+This project installs and configures my debian-based [Wireguard](https://www.wireguard.com/) VPN configuration and a management UI ([WG Portal](https://wgportal.org/latest/)). In addition, since exposing a VPN to the internet can be a security risk if you don't know what you're doing, this project also sets up some features and services to enhance the server security. The VPN can be installed in two different methods.
 - Vanilla Wireguard, which installs and configures a plain Wireguard service.
 **Note:** The steps performed during the vanilla Wireguard installation are based on the [How to set up wireguard on ubuntu 20.04](https://www.digitalocean.com/community/tutorials/how-to-set-up-wireguard-on-ubuntu-20-04) article from Digital Ocean. 
 - Wireguard through [PiVPN](https://www.pivpn.io/).
@@ -19,6 +19,8 @@ This project contains multiple playbooks that can run in sequence or separately.
 - `rafel-c-alexandre.ntp`
 
 and installs a Wireguard server (by default in `/etc/wireguard/${INTERFACE}.conf)`), plus generates the requested clients configs (by default in `/etc/wireguard/configs`). 
+
+**`playbooks/wg-portal.yml`**: This playbook install WG Portal for a more user-friendly VPN management (or updates it if already installed) .
 
 
 ## Installation
@@ -54,15 +56,22 @@ cp configs/ansible_after_prepare.cfg ansible.cfg && cp configs/config_after_prep
 ``` bash
 ansible-playbook playbooks/main.yml
 ``` 
-
 12. (Optional). If you just want to run the Wireguard-related task, to either setup the VPN or generate/edit/delete a peer, you can run 
 ```bash
 ansible-playbook playbooks/main.yml --tags wireguard
 ``` 
+13. (Optional) If you want to install WG Portal, you can run 
+```bash
+ansible-playbook playbooks/wg-portal.yml
+```
 
 ### Manual actions
 
-This set of playbooks does pretty much everything automatically. However, some actions still require manual intervention:
+This set of playbooks does pretty much everything automatically. However, some actions still require manual intervention.
+
+#### Without WG Portal
+
+If wireguard is to be used without WG Portal management UI, the following actions should be performed:
 
 1. If the VPN host is behid a device that performs NAT, port forwarding should be configured on that device to route any traffic on Wireguard's port (by default 51820) to the VPN host. Conversely, if the VPN host has a public IP address, this step is not necessary.
 
@@ -77,6 +86,18 @@ Alternatively, the configs can be downloaded from the server through tools like 
 scp $USER@$VPN_HOST:$VPN_PORT:/etc/wireguard/configs/${PEER} ${DESIREDTARGETLOCATION} -i ${IDENTITY_FILE}
 ```
 
+#### With WG Portal
+
+If wireguard is to be used with WG Portal management UI, the following actions should be performed:
+
+1. Navigate ton the UI, login and edit the already created wg interface (in *server mode*) by selecting the *Peer Defaults* tab.
+2. Add the following values:
+  - Endpoint (server_hostname:wireguard_port)
+  - IP networks (the IP addresses range from which the peers will get addresses)
+  - Allowed IP Addresses (which target IP ranges should be routed through the VPN interface)
+  - DNS (DNS servers which the peer should use when connectd to the VPN)
+3. Save and exit.
+
 ## Overriding Defaults
 
 You can override any of the defaults configured in `default.config.yml` by creating a `config.yml` file and setting the overrides in that file. For example, you can customize the wireguard ip addresses, interfaces and peers to be generated with something like:
@@ -87,16 +108,6 @@ ssh_pub_key_relative_location: ~/.ssh/ansible.pub
 ssh_config_path: /etc/ssh/sshd_config
 ssh_port: 2849
 wireguard_port: 51820
-
-security_ufw_rules:
-  - rule: allow
-    to_port: "{{ ssh_port }}"
-    protocol: tcp
-    comment: allow-ssh
-  - rule: allow
-    to_port: "{{ wireguard_port }}"
-    protocol: udp
-    comment: allow-wireguard
 
 sys_ctl_path: "/etc/sysctl.conf"
 
@@ -151,6 +162,27 @@ pivpn_pivpnINSTALLED_PACKAGES: "(grepcidr bsdmainutils wireguard-tools qrencode)
 # is behind a NAT gateway.
 # pivpn_IPv4addr: 192.168.2.13/24
 # pivpn_IPv4gw: 192.168.2.254
+
+# Wireguard portal related configs
+wireguard_portal_version: v2.0.0-beta.7
+wireguard_portal_host: 192.168.1.68
+wireguard_portal_port: 8888
+wireguard_portal_new_interface_cidr_v4: 10.8.0.0/24
+wireguard_portal_new_interface_cidr_v6: fd11:5ee:bad:c0de::a9c:1800/64
+wireguard_portal_binary_directory: /opt/wg-portal
+wireguard_portal_log_file_path: /var/log/wg-portal.log
+wireguard_portal_logrotate_config_path: /etc/logrotate.d/wg-portal
+
+security_ufw_rules:
+  - rule: allow
+    to_port: "{{ ssh_port }}"
+    protocol: tcp
+    comment: allow-ssh
+  - rule: allow
+    to_port: "{{ wireguard_port }}"
+    protocol: udp
+    comment: allow-wireguard
+
 
 ```
 

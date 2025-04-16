@@ -61,6 +61,7 @@
         rule: allow
         port: "{{ wireguard_portal_port }}"
         proto: tcp
+        comment: "allow-wgportal"
 
     - name: Copy custom configuration and deploy systemd wg-portal service unit file.
       template:
