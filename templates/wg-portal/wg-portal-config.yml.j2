@@ -1,0 +1,9 @@
+---
+advanced:
+  log_level: debug
+  log_pretty: true
+  start_cidr_v4: {{ wireguard_portal_new_interface_cidr_v4 }}
+  start_cidr_v6: {{ wireguard_portal_new_interface_cidr_v6 }}
+web:
+  external_url: http://{{ inventory_hostname }}:{{ wireguard_portal_port }}
+  request_logging: true

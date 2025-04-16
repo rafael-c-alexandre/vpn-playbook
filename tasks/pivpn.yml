@@ -11,7 +11,7 @@
       get_url:
         url: "https://raw.githubusercontent.com/pivpn/pivpn/master/auto_install/install.sh"
         dest: "/tmp/install.sh"
-        mode: "0700"
+        mode: "0750"
 
     - include_tasks: "{{ playbook_dir }}/../tasks/network.yml"
 
@@ -19,11 +19,15 @@
       template:
         src: "{{ playbook_dir }}/../templates/pivpn/options.conf.j2"
         dest: /tmp/options.conf
-        mode: "0600"
+        mode: "0640"
 
     - name: Run install.sh with unattended flag.
       command: "/tmp/install.sh --unattended /tmp/options.conf"
       changed_when: false
+      register: result
+      retries: 10 # Retry because this task might fail due to unattended-upgrades.
+      delay: 20
+      until: result is success
 
     - name: Cleanup installer files.
       file:

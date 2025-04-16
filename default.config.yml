@@ -58,6 +58,16 @@ pivpn_pivpnINSTALLED_PACKAGES: "(grepcidr bsdmainutils wireguard-tools qrencode)
 # pivpn_IPv4addr: 192.168.2.13/24
 # pivpn_IPv4gw: 192.168.2.254
 
+# Wireguard portal related configs
+wireguard_portal_version: v2.0.0-beta.7
+wireguard_portal_host: 192.168.1.68
+wireguard_portal_port: 8888
+wireguard_portal_new_interface_cidr_v4: 10.8.0.0/24
+wireguard_portal_new_interface_cidr_v6: fd11:5ee:bad:c0de::a9c:1800/64
+wireguard_portal_binary_directory: /opt/wg-portal
+wireguard_portal_log_file_path: /var/log/wg-portal.log
+wireguard_portal_logrotate_config_path: /etc/logrotate.d/wg-portal
+
 security_ufw_rules:
   - rule: allow
     to_port: "{{ ssh_port }}"

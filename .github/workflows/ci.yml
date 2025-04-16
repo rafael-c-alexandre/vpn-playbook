@@ -60,7 +60,7 @@ jobs:
           ansible-galaxy install -r requirements.yml
 
       - name: Fix ansible private keys permissions.
-        run: chmod 600 $TEST_CONFIGS_PATH/keys/ci $TEST_CONFIGS_PATH/keys/ansible
+        run: chmod 0600 $TEST_CONFIGS_PATH/keys/ci $TEST_CONFIGS_PATH/keys/ansible
 
       - name: Run prepare.yml playbook test.
         uses: rafael-c-alexandre/ansible-devops/.github/actions/playbook-test@main
@@ -74,6 +74,14 @@ jobs:
         uses: rafael-c-alexandre/ansible-devops/.github/actions/playbook-test@main
         with:
           playbook_path: "./playbooks/main.yml"
+          ansible_cfg_path: "$TEST_CONFIGS_PATH/ansible_after_prepare.cfg"
+          inventory_path: "$TEST_CONFIGS_PATH/inventory.ini"
+          config_path: "$TEST_CONFIGS_PATH/config_after_prepare_${{ matrix.wireguard_installation_mode }}.yml"
+
+      - name: Run wg-portal.yml playbook test.
+        uses: rafael-c-alexandre/ansible-devops/.github/actions/playbook-test@main
+        with:
+          playbook_path: "./playbooks/wg-portal.yml"
           ansible_cfg_path: "$TEST_CONFIGS_PATH/ansible_after_prepare.cfg"
           inventory_path: "$TEST_CONFIGS_PATH/inventory.ini"
           config_path: "$TEST_CONFIGS_PATH/config_after_prepare_${{ matrix.wireguard_installation_mode }}.yml"

@@ -15,7 +15,7 @@
   file:
     path: "{{ item }}"
     state: directory
-    mode: "0700"
+    mode: "0750"
   with_items:
     - "{{ wireguard_conf_dir }}"
     - "{{ wireguard_conf_dir }}/keys"
@@ -28,13 +28,16 @@
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
     state: present
-    mode: "0600"
+    mode: "0640"
   with_items:
     - regexp: "^.*net.ipv4.ip_forward"
       line: "net.ipv4.ip_forward=1"
     - regexp: "^.*net.ipv6.conf.all.forwarding"
       line: "net.ipv6.conf.all.forwarding=1"
-  notify: reload sysctl
+
+- name: Ensure sysctl IP forwarding is reloaded.
+  command: sysctl -p
+  changed_when: false
 
 - name: Check if server private key exist and create if not.
   shell: |
@@ -43,7 +46,7 @@
       cat "{{ wireguard_conf_dir }}/keys/server"
     else
       wg genkey | tee "{{ wireguard_conf_dir }}/keys/server"
-      chmod 600 "{{ wireguard_conf_dir }}/keys/server"
+      chmod 0640 "{{ wireguard_conf_dir }}/keys/server"
     fi
   args:
     executable: /bin/bash
@@ -59,7 +62,7 @@
       cat "{{ wireguard_conf_dir }}/keys/server.pub"
     else
       cat "{{ wireguard_conf_dir }}/keys/server" | wg pubkey | tee "{{ wireguard_conf_dir }}/keys/server.pub"
-      chmod 600 "{{ wireguard_conf_dir }}/keys/server.pub"
+      chmod 0640 "{{ wireguard_conf_dir }}/keys/server.pub"
     fi
   args:
     executable: /bin/bash
@@ -81,7 +84,7 @@
       cat "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}"
     else
       wg genkey | tee "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}"
-      chmod 600 "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}"
+      chmod 0640 "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}"
     fi
   args:
     executable: /bin/bash
@@ -96,7 +99,7 @@
        cat "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}.pub"
     else
       cat "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}" | wg pubkey | tee "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}.pub"
-      chmod 600 "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}.pub"
+      chmod 0640 "{{ wireguard_conf_dir }}/configs/keys/{{ item.name }}.pub"
     fi
   args:
     executable: /bin/bash
@@ -118,14 +121,13 @@
   template:
     src: "{{ playbook_dir }}/../templates/vanilla-wireguard/wg.conf.j2"
     dest: "{{ wireguard_conf_dir }}/{{ wireguard_server_interface }}.conf"
-    mode: "0600"
-  notify: reload wireguard
+    mode: "0640"
 
 - name: Generate peers config from template.
   template:
     src: "{{ playbook_dir }}/../templates/vanilla-wireguard/peer.conf.j2"
     dest: "{{ wireguard_conf_dir }}/configs/{{ item.name }}.conf"
-    mode: "0600"
+    mode: "0640"
   with_items: "{{ wireguard_peers }}"
 
 - name: Register all keep peers paths.
@@ -145,3 +147,9 @@
     name: "wg-quick@{{ wireguard_server_interface }}"
     state: started
     enabled: true
+
+- name: Reload wireguard.
+  shell: "wg syncconf {{ wireguard_server_interface }} <(wg-quick strip {{ wireguard_server_interface }})"
+  args:
+    executable: /bin/bash
+  changed_when: false

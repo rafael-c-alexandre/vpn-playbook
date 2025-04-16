@@ -1,0 +1,8 @@
+{{ wireguard_portal_log_file_path }} {
+    weekly                     # Rotate logs weekly
+    rotate 4                   # Keep the last 4 weeks of logs
+    compress                   # Compress old logs
+    missingok                  # Don't show errors if log is missing
+    notifempty                 # Don't rotate empty logs
+    create 640 root root        # Set correct permissions
+}

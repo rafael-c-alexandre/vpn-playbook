@@ -17,17 +17,6 @@
         update_cache: true
         cache_valid_time: 3600
 
-  handlers:
-    - name: reload wireguard
-      shell: "wg syncconf {{ wireguard_server_interface }} <(wg-quick strip {{ wireguard_server_interface }})"
-      args:
-        executable: /bin/bash
-      changed_when: false
-
-    - name: reload sysctl
-      command: "sysctl -p"
-      changed_when: false
-
   tasks:
     - name: Install security services.
       include_role:
