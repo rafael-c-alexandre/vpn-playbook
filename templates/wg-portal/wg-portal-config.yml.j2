@@ -1,9 +1,11 @@
 ---
+core:
+  admin_user: {{ wireguard_portal_admin_user | default("admin") }}
+  admin_password: {{ wireguard_portal_admin_password | default("wgportal") }}
 advanced:
   log_level: debug
   log_pretty: true
-  start_cidr_v4: {{ wireguard_portal_new_interface_cidr_v4 }}
-  start_cidr_v6: {{ wireguard_portal_new_interface_cidr_v6 }}
+  start_listen_port: {{ wireguard_port }}
 web:
   external_url: http://{{ inventory_hostname }}:{{ wireguard_portal_port }}
   request_logging: true

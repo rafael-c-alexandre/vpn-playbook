@@ -27,13 +27,7 @@ wireguard_server_default_interface: eth0
 # for the VPN server.
 # wireguard_server_ddns_name: pivpn.ddns.net
 
-wireguard_peers:
-  - name: client_1
-    wireguard_addresses:
-      - 10.8.0.2/32
-      - fd11:5ee:bad:c0de::a9c:1802/128
-    wireguard_allowed_ips: "{{ wireguard_peers_allowed_ips }}"
-    wireguard_dns: "{{ wireguard_dns }}"
+wireguard_peers: []
 
 # PiVPN related configs
 pivpn_dhcpReserv: 1
@@ -62,8 +56,6 @@ pivpn_pivpnINSTALLED_PACKAGES: "(grepcidr bsdmainutils wireguard-tools qrencode)
 wireguard_portal_version: v2.0.0-beta.7
 wireguard_portal_host: 192.168.1.68
 wireguard_portal_port: 8888
-wireguard_portal_new_interface_cidr_v4: 10.8.0.0/24
-wireguard_portal_new_interface_cidr_v6: fd11:5ee:bad:c0de::a9c:1800/64
 wireguard_portal_binary_directory: /opt/wg-portal
 wireguard_portal_log_file_path: /var/log/wg-portal.log
 wireguard_portal_logrotate_config_path: /etc/logrotate.d/wg-portal

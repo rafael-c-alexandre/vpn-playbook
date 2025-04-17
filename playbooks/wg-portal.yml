@@ -90,7 +90,3 @@
         name: wg-portal
         enabled: true
         state: started
-
-# Missing:
-# 4. Provide custom user and password.
-# 5. Look into mail notifcation, TLS and certificates.
