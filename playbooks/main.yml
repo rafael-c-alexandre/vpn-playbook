@@ -11,11 +11,21 @@
       include_vars: "{{ item }}"
       with_fileglob:
         - "{{ playbook_dir }}/../config.yml"
+      tags:
+        - always
 
     - name: Update apt caches.
       package:
         update_cache: true
         cache_valid_time: 3600
+      tags:
+        - always
+
+  handlers:
+    - name: reload wg-portal
+      systemd:
+        name: wg-portal
+        state: restarted
 
   tasks:
     - name: Install security services.

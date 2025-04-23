@@ -1,0 +1,63 @@
+---
+- name: Create Wireguard migration files.
+  hosts: all
+
+  vars_files:
+    - "{{ playbook_dir }}/../default.config.yml"
+
+  pre_tasks:
+    - name: Include playbook configuration.
+      include_vars: "{{ item }}"
+      with_fileglob:
+        - "{{ playbook_dir }}/../config.yml"
+
+  tasks:
+    - name: Set migration source path (vanilla_wireguard/PiVPN).
+      set_fact:
+        migration_src_path: "{{ wireguard_conf_dir }}/"
+      when: wireguard_installation_mode == 'vanilla_wireguard' or wireguard_installation_mode == 'pivpn'
+
+    - name: Set migration source path (wireguard_portal).
+      set_fact:
+        migration_src_path: "{{ wireguard_portal_binary_directory }}/data/"
+      when: wireguard_installation_mode == 'wireguard_portal'
+
+    - name: Copy existing Wireguard files to temporary location.
+      copy:
+        src: "{{ migration_src_path }}"
+        dest: /migration/
+        remote_src: true
+        mode: "0640"
+      become: true
+
+    - name: Archive necessary files for migration.
+      archive:
+        path: /migration
+        dest: /tmp/wireguard-migration.zip
+        mode: "0640"
+        format: zip
+      become: true
+
+    - name: Create base migration dir.
+      file:
+        path: "{{ playbook_dir }}/../migration"
+        state: directory
+        mode: "0750"
+      delegate_to: localhost
+
+    - name: Fetch migration archive.
+      fetch:
+        src: /tmp/wireguard-migration.zip
+        dest: "{{ playbook_dir }}/../migration/wireguard-migration.zip"
+        mode: "0640"
+        flat: true
+      become: true
+
+    - name: Remove temporary files on the server.
+      file:
+        path: "{{ item }}"
+        state: absent
+      become: true
+      with_items:
+        - /tmp/wireguard-migration.zip
+        - /migration

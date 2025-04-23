@@ -1,0 +1,93 @@
+---
+- include_tasks: "{{ playbook_dir }}/../tasks/ip_forwarding.yml"
+- include_tasks: "{{ playbook_dir }}/../tasks/network.yml"
+
+- name: Allow traffic to wg-portal.
+  ufw:
+    rule: allow
+    port: "{{ wireguard_portal_port }}"
+    proto: tcp
+    comment: "allow-wgportal"
+
+- name: Set UFW traffic forwarding.
+  ufw:
+    rule: allow
+    route: true
+    interface_in: "{{ wireguard_server_interface }}"
+    interface_out: "{{ wireguard_server_default_interface }}"
+    proto: any
+
+- name: Set iptables traffic forwarding.
+  iptables:
+    table: nat
+    chain: POSTROUTING
+    jump: MASQUERADE
+    out_interface: "{{ wireguard_server_default_interface }}"
+    ip_version: "{{ item }}"
+    state: present
+  with_items:
+    - ipv4
+    - ipv6
+
+- name: Set architecture fact.
+  set_fact:
+    arch: "{{ 'amd64' if ansible_facts.architecture == 'x86_64' else 'arm64' }}"
+
+- name: Download wg-portal.
+  get_url:
+    url: "https://github.com/h44z/wg-portal/releases/download/{{ wireguard_portal_version }}/wg-portal_linux_{{ arch }}"
+    dest: "/tmp/wg-portal-{{ wireguard_portal_version }}"
+    mode: "0750"
+
+- name: Create wg-portal directories.
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0750"
+  with_items:
+    - "{{ wireguard_portal_binary_directory }}"
+    - "{{ wireguard_portal_binary_directory }}/config"
+    - "{{ wireguard_portal_binary_directory }}/data"
+
+- name: Install wg-portal.
+  command: "install /tmp/wg-portal-{{ wireguard_portal_version }} {{ wireguard_portal_binary_directory }}/wg-portal"
+  changed_when: false
+
+- name: Copy custom configuration and deploy systemd wg-portal service unit file.
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "0640"
+  with_items:
+    - src: "{{ playbook_dir }}/../templates/wg-portal/wg-portal-config.yml.j2"
+      dest: "{{ wireguard_portal_binary_directory }}/config/config.yml"
+    - src: "{{ playbook_dir }}/../templates/wg-portal/wg-portal.service.j2"
+      dest: /etc/systemd/system/wg-portal.service
+  notify: reload wg-portal
+
+- name: Copy existing wg-portal database.
+  copy:
+    src: "{{ wireguard_portal_existing_database_path }}"
+    dest: "{{ wireguard_portal_binary_directory }}/data/sqlite.db"
+    mode: "0640"
+  when: wireguard_portal_existing_database_path is defined
+  notify: reload wg-portal
+
+- name: Copy logrotate file for wg-portal log.
+  template:
+    src: "{{ playbook_dir }}/../templates/wg-portal/wg-portal.logrotate.log.j2"
+    dest: "{{ wireguard_portal_logrotate_config_path }}"
+    mode: "0640"
+
+- name: Reload systemd.
+  systemd:
+    daemon_reload: true
+
+- include_tasks: "{{ playbook_dir }}/../tasks/migrate.yml"
+  when: wireguard_migration_zip_path is defined
+
+- name: Start wg-portal service and enable at boot.
+  systemd:
+    name: wg-portal
+    enabled: true
+    state: started

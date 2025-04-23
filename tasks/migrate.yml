@@ -1,0 +1,40 @@
+---
+- name: Set migration source path (vanilla_wireguard/PiVPN).
+  set_fact:
+    migration_src_path: /migration/
+    migration_dest_path: "{{ wireguard_conf_dir }}/"
+    wireguard_service: "wg-quick@{{ wireguard_interface }}"
+  when: wireguard_installation_mode == 'vanilla_wireguard' or wireguard_installation_mode == 'pivpn'
+
+- name: Set migration source path (wireguard_portal).
+  set_fact:
+    migration_src_path: "/migration/sqlite.db"
+    migration_dest_path: "{{ wireguard_portal_binary_directory }}/data/"
+    wireguard_service: wg-portal
+  when: wireguard_installation_mode == 'wireguard_portal'
+
+- name: Copy migration zip to target server.
+  copy:
+    src: "{{ wireguard_migration_zip_path }}"
+    dest: /wireguard-migration.zip
+
+- name: Unarchive migration zip file.
+  unarchive:
+    src: /wireguard-migration.zip
+    dest: /
+    remote_src: true
+
+- name: Move Wireguard files to the right location.
+  copy:
+    src: "{{ migration_src_path }}"
+    dest: "{{ migration_dest_path }}"
+    mode: "0640"
+    remote_src: true
+
+- name: Remove temporary files on the server.
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /migration
+    - /wireguard-migration.zip

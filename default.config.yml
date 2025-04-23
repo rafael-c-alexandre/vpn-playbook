@@ -7,7 +7,10 @@ wireguard_port: 51820
 sys_ctl_path: "/etc/sysctl.conf"
 
 wireguard_interface: wg0
-wireguard_installation_mode: vanilla_wireguard # 'vanilla_wireguard' or 'pivpn'.
+wireguard_installation_mode: pivpn # 'vanilla_wireguard', 'pivpn' or "wireguard_portal".
+# Migratation zip file path, relative to the playbooks folder
+# wireguard_migration_zip_path:
+
 wireguard_conf_dir: /etc/wireguard
 wireguard_peers_allowed_ips:
   - 0.0.0.0/0

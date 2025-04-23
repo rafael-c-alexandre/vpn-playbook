@@ -25,7 +25,7 @@ jobs:
     needs: lint
     strategy:
       matrix:
-        wireguard_installation_mode: [vanilla_wireguard, pivpn]
+        wireguard_installation_mode: [vanilla_wireguard, pivpn, wireguard_portal]
 
     steps:
       - name: Check out the codebase.
@@ -74,14 +74,6 @@ jobs:
         uses: rafael-c-alexandre/ansible-devops/.github/actions/playbook-test@main
         with:
           playbook_path: "./playbooks/main.yml"
-          ansible_cfg_path: "$TEST_CONFIGS_PATH/ansible_after_prepare.cfg"
-          inventory_path: "$TEST_CONFIGS_PATH/inventory.ini"
-          config_path: "$TEST_CONFIGS_PATH/config_after_prepare_${{ matrix.wireguard_installation_mode }}.yml"
-
-      - name: Run wg-portal.yml playbook test.
-        uses: rafael-c-alexandre/ansible-devops/.github/actions/playbook-test@main
-        with:
-          playbook_path: "./playbooks/wg-portal.yml"
           ansible_cfg_path: "$TEST_CONFIGS_PATH/ansible_after_prepare.cfg"
           inventory_path: "$TEST_CONFIGS_PATH/inventory.ini"
           config_path: "$TEST_CONFIGS_PATH/config_after_prepare_${{ matrix.wireguard_installation_mode }}.yml"

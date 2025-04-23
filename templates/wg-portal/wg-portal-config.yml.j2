@@ -6,6 +6,8 @@ advanced:
   log_level: debug
   log_pretty: true
   start_listen_port: {{ wireguard_port }}
+database:
+  dsn: {{ wireguard_portal_binary_directory }}/data/sqlite.db
 web:
   external_url: http://{{ inventory_hostname }}:{{ wireguard_portal_port }}
   request_logging: true

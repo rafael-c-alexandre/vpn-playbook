@@ -22,22 +22,15 @@
     - "{{ wireguard_conf_dir }}/configs"
     - "{{ wireguard_conf_dir }}/configs/keys"
 
-- name: Configure IP forwarding.
-  lineinfile:
-    dest: "{{ sys_ctl_path }}"
-    regexp: "{{ item.regexp }}"
-    line: "{{ item.line }}"
-    state: present
+- name: Copy existing interface and peers configuration.
+  copy:
+    src: "{{ wireguard_existing_configuration_path }}"
+    dest: "{{ wireguard_conf_dir }}"
     mode: "0640"
-  with_items:
-    - regexp: "^.*net.ipv4.ip_forward"
-      line: "net.ipv4.ip_forward=1"
-    - regexp: "^.*net.ipv6.conf.all.forwarding"
-      line: "net.ipv6.conf.all.forwarding=1"
+  when: wireguard_existing_configuration_path is defined
 
-- name: Ensure sysctl IP forwarding is reloaded.
-  command: sysctl -p
-  changed_when: false
+- include_tasks: "{{ playbook_dir }}/../tasks/ip_forwarding.yml"
+- include_tasks: "{{ playbook_dir }}/../tasks/network.yml"
 
 - name: Check if server private key exist and create if not.
   shell: |
@@ -53,7 +46,6 @@
   register: register_server_private_key
   changed_when: false
 
-- include_tasks: "{{ playbook_dir }}/../tasks/network.yml"
 
 - name: Check if server public key exists and create if not.
   shell: |
@@ -141,6 +133,9 @@
     state: absent
   when: item.path | basename | regex_replace('(\.conf$|\.pub$)', '') not in wireguard_peers | map(attribute='name') | list
   with_items: ["{{ found_peer_files.files }}"]
+
+- include_tasks: "{{ playbook_dir }}/../tasks/migrate.yml"
+  when: wireguard_migration_zip_path is defined
 
 - name: Ensure Wireguard is started and enabled at boot.
   service:
