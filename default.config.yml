@@ -7,7 +7,7 @@ wireguard_port: 51820
 sys_ctl_path: "/etc/sysctl.conf"
 
 wireguard_interface: wg0
-wireguard_installation_mode: pivpn # 'vanilla_wireguard', 'pivpn' or "wireguard_portal".
+wireguard_installation_mode: wireguard_portal # 'vanilla_wireguard', 'pivpn' or "wireguard_portal".
 # Migratation zip file path, relative to the playbooks folder
 # wireguard_migration_zip_path:
 
@@ -56,8 +56,7 @@ pivpn_pivpnINSTALLED_PACKAGES: "(grepcidr bsdmainutils wireguard-tools qrencode)
 # pivpn_IPv4gw: 192.168.2.254
 
 # Wireguard portal related configs
-wireguard_portal_version: v2.0.0-beta.7
-wireguard_portal_host: 192.168.1.68
+wireguard_portal_version: v2.0.5
 wireguard_portal_port: 8888
 wireguard_portal_binary_directory: /opt/wg-portal
 wireguard_portal_log_file_path: /var/log/wg-portal.log

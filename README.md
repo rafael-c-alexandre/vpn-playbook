@@ -96,8 +96,8 @@ If wireguard is to be used with WG Portal management UI, the following actions s
 1. Navigate ton the UI, login and edit the already created wg interface (in *server mode*) by selecting the *Peer Defaults* tab.
 2. Add the following values:
   - Endpoint (server_hostname:wireguard_port)
-  - IP networks (the IP addresses range from which the peers will get addresses)
-  - Allowed IP Addresses (which target IP ranges should be routed through the VPN interface)
+  - IP networks (the IP addresses range from which the peers will get addresses, the default should be fine unless some other subnet may interfer)
+  - Allowed IP Addresses (which target IP ranges should be routed through the VPN interface, if nothing specific, enter: `0.0.0.0/0` and `::0/0` for all the traffic to be router)
   - DNS (DNS servers which the peer should use when connectd to the VPN)
 3. Save and exit.
 
