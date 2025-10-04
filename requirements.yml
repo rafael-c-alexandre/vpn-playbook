@@ -5,4 +5,4 @@ roles:
   - name: rafael-c-alexandre.ntp
 
 collections:
-  - community.general
+  - name: community.general
