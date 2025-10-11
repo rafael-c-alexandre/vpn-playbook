@@ -113,8 +113,6 @@ ssh_config_path: /etc/ssh/sshd_config
 ssh_port: 2849
 wireguard_port: 51820
 
-sys_ctl_path: "/etc/sysctl.conf"
-
 wireguard_interface: wg0
 wireguard_installation_mode: pivpn # 'vanilla_wireguard', 'pivpn' or "wireguard_portal".
 # Migratation zip file path, relative to the playbooks folder
