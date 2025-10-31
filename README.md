@@ -72,13 +72,13 @@ ansible-playbook playbooks/main.yml --tags wireguard
 
 This set of playbooks does pretty much everything automatically. However, some actions still require manual intervention.
 
+**Note:** If the VPN host is behind a device that performs NAT, port forwarding should be configured on that device to route any traffic on Wireguard's port (by default 51820) to the VPN host. Conversely, if the VPN host has a public IP address, this step is not necessary.
+
 #### Without WG Portal
 
 If wireguard is to be used without WG Portal management UI, the following actions should be performed:
 
-1. If the VPN host is behid a device that performs NAT, port forwarding should be configured on that device to route any traffic on Wireguard's port (by default 51820) to the VPN host. Conversely, if the VPN host has a public IP address, this step is not necessary.
-
-2. In order to get the peers set up, we need to retrieve the configs from the peer configs folder. The main.yml playbook also installs [qrencode](https://linux.die.net/man/1/qrencode), which is an handy tool to generate QR codes out of the Wireguard peer config files, which can then be scanned with a mobile device. Example:
+1. In order to get the peers set up, we need to retrieve the configs from the peer configs folder. The main.yml playbook also installs [qrencode](https://linux.die.net/man/1/qrencode), which is an handy tool to generate QR codes out of the Wireguard peer config files, which can then be scanned with a mobile device. Example:
 ```bash 
 ssh $USER@$VPN_HOST:$VPN_PORT -i ${IDENTITY_FILE}
 qrencode -t ansiutf8 < /etc/wireguard/configs/${CLIENT}.conf
@@ -93,13 +93,14 @@ scp $USER@$VPN_HOST:$VPN_PORT:/etc/wireguard/configs/${PEER} ${DESIREDTARGETLOCA
 
 If wireguard is to be used with WG Portal management UI, the following actions should be performed:
 
-1. Navigate ton the UI, login and edit the already created wg interface (in *server mode*) by selecting the *Peer Defaults* tab.
-2. Add the following values:
+1. Navigate to the UI, login and add a new created wg interface by clicking the '+'  button.
+2. Navigate to  the *Peer Defaults* tab.
+3. Add the following values:
   - Endpoint (server_hostname:wireguard_port)
   - IP networks (the IP addresses range from which the peers will get addresses, the default should be fine unless some other subnet may interfer)
   - Allowed IP Addresses (which target IP ranges should be routed through the VPN interface, if nothing specific, enter: `0.0.0.0/0` and `::0/0` for all the traffic to be router)
   - DNS (DNS servers which the peer should use when connectd to the VPN)
-3. Save and exit.
+4. Save and exit.
 
 ## Overriding Defaults
 
@@ -114,8 +115,8 @@ ssh_port: 2849
 wireguard_port: 51820
 
 wireguard_interface: wg0
-wireguard_installation_mode: pivpn # 'vanilla_wireguard', 'pivpn' or "wireguard_portal".
-# Migratation zip file path, relative to the playbooks folder
+wireguard_installation_mode: pivpn # 'vanilla_wireguard', 'pivpn' or 'wireguard_portal'.
+# Migratation zip file path, relative to the playbooks folder. This is usually used after running backup playbook.
 # wireguard_migration_zip_path:
 
 wireguard_conf_dir: /etc/wireguard
