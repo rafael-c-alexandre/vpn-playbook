@@ -12,7 +12,7 @@
   set_fact:
     wireguard_server_default_interface: "{{ register_default_interface.stdout }}"
 
-- name: Retrieve and set public ip in case server.wireguard endpoint is not defined.
+- name: Retrieve and set public ip in case wireguard_server_ddns_name is not defined.
   when: not wireguard_server_ddns_name is defined
   block:
     - name: Get public IPv4 address.
