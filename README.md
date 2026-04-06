@@ -22,7 +22,7 @@ This project contains multiple playbooks that can run in sequence or separately.
 - `rafael-c-alexandre.security`
 - `rafel-c-alexandre.ntp`
 
-and installs a Wireguard server (by default in `/etc/wireguard/${INTERFACE}.conf)`), plus generates the requested clients configs (by default in `/etc/wireguard/configs`). 
+and installs a Wireguard server (by default in `/etc/wireguard/${INTERFACE}.conf`), plus generates the requested clients configs (by default in `/etc/wireguard/configs`). 
 
 **`playbooks/backup.yml`**: This playbook backs up the current wireguard configuration, depending on the installation mode. It creates a `$PROJECT_ROOT/migration/wireguard-migration.zip` path where the backed up data is stored.
 
