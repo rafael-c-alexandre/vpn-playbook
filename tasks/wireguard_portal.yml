@@ -17,7 +17,7 @@
     interface_out: "{{ wireguard_server_default_interface }}"
     proto: any
 
-- name: Set iptables traffic forwarding.
+- name: Set iptables traffic nat masquerading.
   iptables:
     table: nat
     chain: POSTROUTING
@@ -27,7 +27,11 @@
     state: present
   with_items:
     - ipv4
-    - ipv6
+
+- name: Install iptables-persistent to save iptables rules across reboots.
+  apt:
+    name: iptables-persistent
+    state: present
 
 - name: Set architecture fact.
   set_fact:

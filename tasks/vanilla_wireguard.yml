@@ -46,7 +46,6 @@
   register: register_server_private_key
   changed_when: false
 
-
 - name: Check if server public key exists and create if not.
   shell: |
     set -euo pipefail
