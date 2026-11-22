@@ -89,7 +89,7 @@ Alternatively, the configs can be downloaded from the server through tools like 
 scp $USER@$VPN_HOST:$VPN_PORT:/etc/wireguard/configs/${PEER} ${DESIREDTARGETLOCATION} -i ${IDENTITY_FILE}
 ```
 
-#### With Wireguard Portal
+#### With WG Portal
 
 If wireguard is to be used with WG Portal management UI, the following actions should be performed:
 
